@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-shell = "2"
+tauri-plugin-autostart = "2"
 rdev = { git = "https://github.com/fufesou/rdev", branch = "master" }
 rusqlite = { version = "0.32", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }

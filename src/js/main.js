@@ -314,18 +314,35 @@ recIndicator.addEventListener('click', async () => {
 
 async function updateStatus() {
   try {
-    const recording = await invoke('get_recording_status');
+    const status = await invoke('get_listener_status');
     const el = document.getElementById('recordingIndicator');
     const text = el.querySelector('.rec-text');
-    if (recording) {
-      el.classList.remove('paused');
+    const dot = el.querySelector('.rec-dot');
+
+    el.classList.remove('paused', 'error');
+    if (status === 'recording') {
       text.textContent = 'Recording';
-    } else {
+    } else if (status === 'paused') {
       el.classList.add('paused');
       text.textContent = 'Paused';
+    } else if (status === 'error') {
+      el.classList.add('error');
+      text.textContent = 'Error';
     }
   } catch (e) {
     console.error('Failed to get status:', e);
+  }
+}
+
+async function checkAccessibility() {
+  try {
+    const granted = await invoke('check_accessibility');
+    const banner = document.getElementById('accessibilityBanner');
+    if (banner) {
+      banner.style.display = granted ? 'none' : 'flex';
+    }
+  } catch (e) {
+    console.error('Failed to check accessibility:', e);
   }
 }
 
@@ -348,6 +365,7 @@ document.getElementById('timeRange').addEventListener('change', () => {
 window.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
   updateStatus();
+  checkAccessibility();
   setInterval(updateStatus, 5000);
 });
 

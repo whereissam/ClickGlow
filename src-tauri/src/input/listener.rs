@@ -1,8 +1,10 @@
 use rdev::{Event, EventType, Key, Button};
 use std::sync::mpsc::Sender;
-use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU8, Ordering};
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
+
+use crate::state::{STATUS_RUNNING, STATUS_ERROR};
 
 #[derive(Debug, Clone, Copy)]
 pub enum MouseButton {
@@ -76,8 +78,10 @@ static LAST_MOUSE_Y: AtomicI64 = AtomicI64::new(0);
 pub fn start_listener(
     tx: Sender<InputEvent>,
     paused: Arc<AtomicBool>,
+    listener_status: Arc<AtomicU8>,
 ) {
     std::thread::spawn(move || {
+        listener_status.store(STATUS_RUNNING, Ordering::Relaxed);
         let mut last_move = Instant::now();
         let move_throttle = std::time::Duration::from_millis(50);
 
@@ -149,6 +153,7 @@ pub fn start_listener(
 
         if let Err(e) = rdev::listen(callback) {
             log::error!("Input listener error: {:?}", e);
+            listener_status.store(STATUS_ERROR, Ordering::Relaxed);
         }
     });
 }

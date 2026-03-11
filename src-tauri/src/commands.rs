@@ -1,7 +1,9 @@
+use std::sync::atomic::Ordering;
 use tauri::State;
 
 use crate::db::queries::{self, DailySummary, HeatmapPoint, KeyFrequency};
-use crate::state::AppState;
+use crate::platform;
+use crate::state::{AppState, STATUS_ERROR, STATUS_PAUSED, STATUS_RUNNING};
 
 #[tauri::command]
 pub fn get_mouse_heatmap(
@@ -36,12 +38,37 @@ pub fn get_daily_summary(
 
 #[tauri::command]
 pub fn get_recording_status(state: State<AppState>) -> bool {
-    !state.paused.load(std::sync::atomic::Ordering::Relaxed)
+    !state.paused.load(Ordering::Relaxed)
 }
 
 #[tauri::command]
 pub fn toggle_recording(state: State<AppState>) -> bool {
-    let was_paused = state.paused.load(std::sync::atomic::Ordering::Relaxed);
-    state.paused.store(!was_paused, std::sync::atomic::Ordering::Relaxed);
+    let was_paused = state.paused.load(Ordering::Relaxed);
+    state.paused.store(!was_paused, Ordering::Relaxed);
+
+    // Update listener status accordingly
+    if was_paused {
+        state.listener_status.store(STATUS_RUNNING, Ordering::Relaxed);
+    } else {
+        state.listener_status.store(STATUS_PAUSED, Ordering::Relaxed);
+    }
+
     !was_paused // return: is now recording?
+}
+
+/// Returns "recording", "paused", or "error"
+#[tauri::command]
+pub fn get_listener_status(state: State<AppState>) -> String {
+    match state.listener_status.load(Ordering::Relaxed) {
+        STATUS_RUNNING => "recording".to_string(),
+        STATUS_PAUSED => "paused".to_string(),
+        STATUS_ERROR => "error".to_string(),
+        _ => "unknown".to_string(),
+    }
+}
+
+/// Check if macOS Accessibility permission is granted
+#[tauri::command]
+pub fn check_accessibility() -> bool {
+    platform::check_accessibility_permission()
 }

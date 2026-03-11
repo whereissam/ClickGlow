@@ -32,16 +32,18 @@
 - [x] Mini heatmap preview on dashboard
 - [x] Recording status indicator with pulse animation
 
-## Phase 3: Controls and Polish
+## Phase 3: Controls and Polish - DONE
 
-- [ ] Add Pause/Resume toggle to tray menu and dashboard UI
-- [ ] Build summary stats: peak hour, most active app
-- [ ] Handle multi-monitor: detect screen bounds, normalize coordinates
-- [ ] Graceful shutdown: flush buffer on SIGTERM / app quit
-- [ ] Auto-start on login (optional, platform-specific)
-- [ ] Error handling: DB write failures, listener crash recovery
-- [ ] Surface listener status in tray icon (recording / paused / error)
-- [ ] macOS Accessibility permission detection + prompt dialog
+- [x] Add Pause/Resume toggle to tray menu and dashboard UI (clickable recording indicator)
+- [x] Build summary stats: peak hour + hourly activity bar chart (clicks & keystrokes by hour)
+- [x] Handle multi-monitor: detect actual screen dimensions via Core Graphics API (macOS)
+- [x] Screen dimensions cached + refreshed every 60s
+- [x] Graceful shutdown: hide window on close (tray app), flush buffer on channel disconnect
+- [x] Compact stat cards UI fix (was too stretched)
+- [x] Auto-start on login via `tauri-plugin-autostart` (macOS LaunchAgent)
+- [x] Error handling: DB write retry (3 attempts w/ backoff), buffer overflow cap (10K events)
+- [x] Surface listener status in tray menu (● Recording / ⏸ Paused / ⚠ Error)
+- [x] macOS Accessibility permission detection via `AXIsProcessTrustedWithOptions` + UI banner
 
 ## Phase 4: Reports and Optimization
 

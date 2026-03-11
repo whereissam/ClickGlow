@@ -154,6 +154,43 @@ h1, h2, h3 {
   color: var(--accent);
 }
 
+.recording-indicator.error {
+  background: rgba(255, 82, 82, 0.08);
+  border-color: rgba(255, 82, 82, 0.15);
+}
+
+.recording-indicator.error .rec-dot {
+  background: #FF5252;
+  animation: none;
+}
+
+.recording-indicator.error .rec-text {
+  color: #FF5252;
+}
+
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin: 16px 16px 0;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 82, 82, 0.1);
+  border: 1px solid rgba(255, 82, 82, 0.2);
+  color: #FF8A80;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.alert-banner svg {
+  flex-shrink: 0;
+  stroke: #FF5252;
+}
+
+.alert-banner strong {
+  color: #FFCDD2;
+}
+
 .time-select select {
   width: 100%;
   padding: 8px 12px;
