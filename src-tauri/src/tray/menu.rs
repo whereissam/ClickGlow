@@ -1,6 +1,7 @@
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::Arc;
 use tauri::{
+    image::Image,
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
     AppHandle, Manager,
@@ -9,6 +10,21 @@ use tauri::{
 use crate::db::connection::Database;
 use crate::pet;
 use crate::state::{STATUS_PAUSED, STATUS_RUNNING};
+
+const TRAY_HAPPY: &[u8] = include_bytes!("../../icons/tray-happy.png");
+const TRAY_ANGRY: &[u8] = include_bytes!("../../icons/tray-angry.png");
+const TRAY_SLEEPING: &[u8] = include_bytes!("../../icons/tray-sleeping.png");
+const TRAY_IDLE: &[u8] = include_bytes!("../../icons/tray-idle.png");
+
+fn pet_icon(mood: &str) -> Image<'static> {
+    let bytes = match mood {
+        "happy" => TRAY_HAPPY,
+        "angry" => TRAY_ANGRY,
+        "sleeping" => TRAY_SLEEPING,
+        _ => TRAY_IDLE,
+    };
+    Image::from_bytes(bytes).expect("Failed to load tray icon")
+}
 
 pub fn setup_tray(
     app: &AppHandle,
@@ -30,10 +46,9 @@ pub fn setup_tray(
     let menu = Menu::with_items(app, &[&pet_item, &status_item, &show, &pause, &quit])?;
 
     let _tray = TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
-        .title(pet_tray_title(&p, false))
+        .icon(pet_icon(&p.mood))
         .menu(&menu)
-        .tooltip("ClickGlow — Recording")
+        .tooltip("ClickGlow")
         .show_menu_on_left_click(true)
         .on_menu_event(move |app, event| {
             match event.id.as_ref() {
@@ -67,31 +82,21 @@ pub fn setup_tray(
                 _ => {}
             }
 
-            // Update pet status in tray menu
-            let is_dist = distracted.load(Ordering::Relaxed);
+            // Update pet status in tray
+            let _is_dist = distracted.load(Ordering::Relaxed);
             let p = pet::load_pet(&db);
             let _ = pet_item.set_text(&format!(
                 "{} HP:{}/{} Lv{}",
                 p.name, p.hp, p.max_hp, p.level
             ));
+            // Update tray icon to match mood
+            if let Some(tray) = app.tray_by_id("main") {
+                let _ = tray.set_icon(Some(pet_icon(&p.mood)));
+            }
         })
         .build(app)?;
 
     Ok(())
-}
-
-fn pet_tray_title(p: &pet::PetState, distracted: bool) -> String {
-    if distracted {
-        format!("🔥 {}", p.name)
-    } else {
-        let emoji = match p.mood.as_str() {
-            "happy" => "😊",
-            "angry" => "😠",
-            "sleeping" => "😴",
-            _ => "🟢",
-        };
-        format!("{} {} HP:{}", emoji, p.name, p.hp)
-    }
 }
 
 fn status_text(status: u8) -> String {

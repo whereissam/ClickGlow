@@ -914,7 +914,42 @@ function updatePetUI(pet, distracted = false) {
   const xpPct = Math.max(0, Math.min(100, (pet.xp / xpNeeded) * 100));
   document.getElementById('petXpFill').style.width = xpPct + '%';
   document.getElementById('petXpText').textContent = `${pet.xp}/${xpNeeded}`;
+
+  // Sync mini pet in sidebar
+  updateMiniPet(pet, distracted);
 }
+
+function updateMiniPet(pet, distracted = false) {
+  const mini = document.getElementById('miniPet');
+  if (!mini) return;
+  mini.setAttribute('data-species', pet.species);
+  mini.setAttribute('data-mood', distracted ? 'angry' : pet.mood);
+  document.getElementById('miniPetName').textContent = pet.name;
+  const hpPct = Math.max(0, Math.min(100, (pet.hp / pet.max_hp) * 100));
+  const fill = document.getElementById('miniHpFill');
+  fill.style.width = hpPct + '%';
+  if (hpPct > 60) fill.style.background = 'linear-gradient(90deg, #4ade80, #22c55e)';
+  else if (hpPct > 40) fill.style.background = 'linear-gradient(90deg, #facc15, #eab308)';
+  else if (hpPct > 20) fill.style.background = 'linear-gradient(90deg, #fb923c, #f97316)';
+  else fill.style.background = 'linear-gradient(90deg, #f87171, #ef4444)';
+}
+
+// Global mini pet poll (always visible in sidebar, updates every 10s)
+setInterval(async () => {
+  try {
+    const pet = await invoke('get_pet');
+    const distracted = await invoke('is_distracted');
+    updateMiniPet(pet, distracted);
+  } catch (_) {}
+}, 10000);
+
+// Init mini pet on load
+(async () => {
+  try {
+    const pet = await invoke('get_pet');
+    updateMiniPet(pet);
+  } catch (_) {}
+})();
 
 // Click pet to interact
 document.getElementById('petCreature').addEventListener('click', () => {
