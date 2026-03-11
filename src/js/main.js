@@ -1,5 +1,31 @@
 const { invoke } = window.__TAURI__.core;
 
+// --- Toast notification ---
+function showToast(message, isError = false) {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    padding:10px 16px;border-radius:10px;font-size:0.8rem;font-weight:600;
+    color:#fff;max-width:320px;word-break:break-all;
+    animation:toastIn 0.3s ease;
+    background:${isError ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'linear-gradient(135deg,#22c55e,#16a34a)'};
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  `;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
 // --- Time range helpers ---
 function getTimeRange(range) {
   const now = Date.now();
@@ -378,18 +404,16 @@ document.getElementById('exportHeatmapBtn').addEventListener('click', async () =
   const canvas = container.querySelector('canvas');
   if (!canvas) return;
 
-  canvas.toBlob(async (blob) => {
-    if (!blob) return;
-    const buffer = await blob.arrayBuffer();
-    const bytes = Array.from(new Uint8Array(buffer));
+  try {
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64 = dataUrl.split(',')[1];
     const ts = new Date().toISOString().slice(0, 10);
-    try {
-      const path = await invoke('save_png', { data: bytes, filename: `clickglow-heatmap-${ts}.png` });
-      alert('Heatmap saved to: ' + path);
-    } catch (e) {
-      console.error('Failed to export heatmap:', e);
-    }
-  }, 'image/png');
+    const path = await invoke('save_png_base64', { base64Data: base64, filename: `clickglow-heatmap-${ts}.png` });
+    showToast('Saved to ' + path);
+  } catch (e) {
+    console.error('Failed to export heatmap:', e);
+    showToast('Export failed: ' + e, true);
+  }
 });
 
 // --- Weekly Report ---
@@ -659,12 +683,22 @@ async function loadAppsPanel() {
 function renderCategoryChart(breakdown) {
   const el = document.getElementById('categoryChart');
   if (!el) return;
-  if (!categoryChart) categoryChart = echarts.init(el, null, { renderer: 'canvas' });
+  if (!categoryChart) {
+    categoryChart = echarts.init(el, null, { renderer: 'canvas' });
+    // Ensure correct size after init
+    setTimeout(() => categoryChart.resize(), 100);
+  }
+
+  if (!breakdown || breakdown.length === 0) {
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:0.8rem;">No category data yet. Use apps to start tracking!</div>';
+    categoryChart = null;
+    return;
+  }
 
   const colorMap = { productive: '#7ED957', neutral: '#5B8CFF', distraction: '#FF5252' };
   const data = breakdown.map(([cat, ms]) => ({
     name: cat.charAt(0).toUpperCase() + cat.slice(1),
-    value: Math.round(ms / 60000), // minutes
+    value: Math.round(ms / 60000) || 1, // at least 1 min to show something
     itemStyle: { color: colorMap[cat] || '#8B8D94' },
   }));
 
@@ -683,7 +717,16 @@ function renderCategoryChart(breakdown) {
 function renderAppUsageChart(usage) {
   const el = document.getElementById('appUsageChart');
   if (!el) return;
-  if (!appUsageChart) appUsageChart = echarts.init(el, null, { renderer: 'canvas' });
+  if (!appUsageChart) {
+    appUsageChart = echarts.init(el, null, { renderer: 'canvas' });
+    setTimeout(() => appUsageChart.resize(), 100);
+  }
+
+  if (!usage || usage.length === 0) {
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:0.8rem;">No app usage data yet.</div>';
+    appUsageChart = null;
+    return;
+  }
 
   const top10 = usage.slice(0, 10);
   const names = top10.map(a => a.app_name).reverse();
@@ -708,9 +751,119 @@ function renderAppUsageChart(usage) {
 // Export poster
 document.getElementById('exportPosterBtn').addEventListener('click', async () => {
   const poster = document.querySelector('.wanted-poster');
-  // Use html2canvas-like approach: render to canvas
-  // For now, we'll capture using the existing ECharts approach or alert
-  alert('Poster export coming soon! Take a screenshot for now.');
+  if (!poster) return;
+
+  // Read data from DOM
+  const name = poster.querySelector('.wanted-name')?.textContent || 'Unknown';
+  const initial = poster.querySelector('.wanted-icon')?.textContent?.trim() || '?';
+  const stats = poster.querySelectorAll('.wanted-stat-value');
+  const labels = poster.querySelectorAll('.wanted-stat-label');
+  const reward = poster.querySelector('.wanted-reward')?.textContent || '';
+
+  // Render to canvas
+  const w = 480, h = 640;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  const grad = ctx.createLinearGradient(0, 0, w, h);
+  grad.addColorStop(0, '#3B2F1A');
+  grad.addColorStop(1, '#2A1F10');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Border
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(12, 12, w - 24, h - 24);
+  ctx.strokeRect(20, 20, w - 40, h - 40);
+
+  // WANTED text
+  ctx.fillStyle = '#D4A843';
+  ctx.font = 'bold 48px "Space Grotesk", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.shadowColor = '#1A1205';
+  ctx.shadowOffsetX = 3;
+  ctx.shadowOffsetY = 3;
+  ctx.fillText('WANTED', w/2, 80);
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  // TIME THIEF subtitle
+  ctx.fillStyle = '#8B6914';
+  ctx.font = '14px "Space Grotesk", sans-serif';
+  ctx.letterSpacing = '4px';
+  ctx.fillText('T I M E   T H I E F', w/2, 110);
+
+  // Icon circle
+  ctx.beginPath();
+  ctx.arc(w/2, 200, 50, 0, Math.PI * 2);
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(212,168,67,0.1)';
+  ctx.fill();
+
+  // Initial letter
+  ctx.fillStyle = '#D4A843';
+  ctx.font = 'bold 36px "Space Grotesk", sans-serif';
+  ctx.fillText(initial, w/2, 214);
+
+  // App name
+  ctx.fillStyle = '#E8D5A3';
+  ctx.font = 'bold 28px "Space Grotesk", sans-serif';
+  ctx.fillText(name, w/2, 300);
+
+  // Stats
+  const statY = 370;
+  for (let i = 0; i < Math.min(stats.length, 3); i++) {
+    const x = w/4 + (i * w/4);
+    ctx.fillStyle = '#D4A843';
+    ctx.font = 'bold 24px "Space Grotesk", sans-serif';
+    ctx.fillText(stats[i].textContent, x, statY);
+    ctx.fillStyle = '#8B6914';
+    ctx.font = '10px "Space Grotesk", sans-serif';
+    ctx.fillText(labels[i]?.textContent?.toUpperCase() || '', x, statY + 20);
+  }
+
+  // Divider
+  ctx.strokeStyle = '#5A4510';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(60, 420);
+  ctx.lineTo(w - 60, 420);
+  ctx.stroke();
+
+  // Reward
+  ctx.fillStyle = '#8B6914';
+  ctx.font = '14px "Space Grotesk", sans-serif';
+  ctx.fillText(reward, w/2, 455);
+
+  // ClickGlow watermark
+  ctx.fillStyle = 'rgba(139,105,20,0.3)';
+  ctx.font = '11px "Space Grotesk", sans-serif';
+  ctx.fillText('Generated by ClickGlow', w/2, h - 30);
+
+  // Export
+  const btn = document.getElementById('exportPosterBtn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  try {
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64 = dataUrl.split(',')[1];
+    const ts = new Date().toISOString().slice(0, 10);
+    const path = await invoke('save_png_base64', { base64Data: base64, filename: `clickglow-wanted-${ts}.png` });
+    btn.textContent = 'Saved!';
+    showToast('Saved to ' + path);
+    setTimeout(() => { btn.textContent = 'Export Poster as PNG'; btn.disabled = false; }, 3000);
+  } catch (e) {
+    console.error('Failed to save poster:', e);
+    btn.textContent = 'Export Failed';
+    showToast('Export failed: ' + e, true);
+    setTimeout(() => { btn.textContent = 'Export Poster as PNG'; btn.disabled = false; }, 3000);
+  }
 });
 
 // --- Activity Log ---

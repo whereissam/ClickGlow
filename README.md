@@ -1,26 +1,53 @@
 # ClickGlow
 
-A privacy-first keyboard & mouse heatmap generator for your desktop. Runs silently in the background, records your input activity locally, and generates beautiful heatmaps and frequency charts.
+A **Digital Life Simulator** disguised as a productivity app. Track your keyboard, mouse, and app usage — with a virtual pet that thrives when you focus and suffers when you get distracted.
 
 **All data stays on your machine. Zero network. Zero telemetry.**
 
 ## Features
 
-- **Mouse Heatmap** - See where you click and hover most on screen
-- **Keyboard Frequency Chart** - Discover your most-used keys
-- **Daily/Weekly Reports** - Auto-generated usage summaries
-- **System Tray** - Runs quietly in the background
-- **Cross-platform** - macOS, Windows, Linux
+### Input Tracking
+- **Mouse Heatmap** — See where you click and hover most on screen
+- **Keyboard Frequency Chart** — Discover your most-used keys
+- **Daily Stats** — Clicks, keystrokes, peak hour, hourly activity breakdown
+
+### App Usage & Focus
+- **Active Window Tracking** — Detects which app/website you're using via window title
+- **Category System** — Apps classified as productive / neutral / distraction
+- **Customizable Rules** — Change any app or keyword's category (YouTuber? Mark YouTube as productive!)
+- **Activity Log** — Full history of app usage with time, duration, and category
+
+### Focus Pet (Tamagotchi x Productivity)
+- **Virtual Pet** — CSS-animated creature that lives in your sidebar and menu bar
+- **HP / XP / Level** — Complete Pomodoros to heal and gain XP; distractions deal damage
+- **Evolution** — Lv1 Slime -> Lv2 Dragon (100 XP) -> Lv3 Wizard (300 XP)
+- **Mood States** — Happy (HP>70), Idle, Angry (HP<30), Sleeping (HP=0)
+- **Real-Time Reactions** — Pet shakes, glows red, and roasts you when you visit YouTube
+- **Pomodoro Timer** — Configurable duration (15-120 min), feeds pet on completion
+- **Menu Bar Icon** — Cute slime icon that changes mood in your macOS menu bar
+
+### Time Thief
+- **WANTED Poster** — Western-style poster showing your top time-wasting app
+- **Export as PNG** — Save the poster to Downloads
+
+### Reports & Settings
+- **Weekly Reports** — Auto-generated every Monday with charts and stats
+- **PNG Export** — Save heatmaps and posters
+- **Data Retention** — Auto-delete old data (configurable)
+- **Auto-Start** — Launch on login via macOS LaunchAgent
+- **Onboarding Wizard** — Guides new users through Accessibility permission setup
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Backend | Rust + Tauri v2 |
-| Input Capture | `rdev` (global listener) |
+| Input Capture | `rdev` (fufesou fork, thread-safe) |
+| Window Tracking | AppleScript (`osascript`) |
 | Storage | SQLite via `rusqlite` (WAL mode) |
 | Frontend | Vanilla JS + `heatmap.js` + `ECharts` |
-| System Tray | Tauri built-in tray API |
+| System Tray | Tauri tray API + custom PNG icons |
+| Auto-Start | `tauri-plugin-autostart` |
 
 ## Architecture
 
@@ -29,90 +56,48 @@ graph TD
     subgraph OS["Operating System"]
         MOUSE["Mouse Events"]
         KB["Keyboard Events"]
+        WIN["Active Window"]
     end
 
     subgraph RUST["Rust Backend (Tauri)"]
         RDEV["rdev Global Listener<br/><i>50ms mouse throttle</i>"]
         BUF["Event Buffer<br/><i>flush: 100 events / 5s</i>"]
-        DB[("SQLite DB<br/><i>WAL mode</i>")]
+        TRACK["Window Tracker<br/><i>poll every 2s</i>"]
+        PET["Pet Engine<br/><i>HP/XP/mood/evolution</i>"]
+        DB[("SQLite DB<br/><i>WAL mode, 4 migrations</i>")]
+        SCHED["Scheduler<br/><i>reports, aggregation, retention</i>"]
         IPC["Tauri IPC Commands"]
-        TRAY["System Tray<br/><i>Pause / Show / Quit</i>"]
+        TRAY["System Tray<br/><i>Pet icon + menu</i>"]
     end
 
     subgraph FRONTEND["Frontend Dashboard"]
-        HEAT["Mouse Heatmap<br/><i>heatmap.js</i>"]
-        KEYS["Keyboard Chart<br/><i>ECharts</i>"]
-        STATS["Stats Panel"]
+        HEAT["Mouse Heatmap"]
+        KEYS["Keyboard Chart"]
+        APPS["App Usage"]
+        PETUI["Focus Pet UI"]
+        LOG["Activity Log"]
     end
 
     MOUSE --> RDEV
     KB --> RDEV
+    WIN --> TRACK
     RDEV -->|"mpsc channel"| BUF
     BUF -->|"batch INSERT"| DB
+    TRACK -->|"app_events"| DB
+    TRACK -->|"damage on distraction"| PET
+    PET --> DB
+    SCHED --> DB
     DB --> IPC
-    IPC -->|"invoke()"| HEAT
-    IPC -->|"invoke()"| KEYS
-    IPC -->|"invoke()"| STATS
+    IPC --> HEAT
+    IPC --> KEYS
+    IPC --> APPS
+    IPC --> PETUI
+    IPC --> LOG
     TRAY -.->|"pause/resume"| RDEV
 
     style OS fill:#2A2D34,stroke:#5C5E66,color:#E8E6E3
     style RUST fill:#1E1F24,stroke:#F7B801,color:#E8E6E3
     style FRONTEND fill:#1E1F24,stroke:#7ED957,color:#E8E6E3
-    style RDEV fill:#2A2D34,stroke:#FF6B35,color:#E8E6E3
-    style BUF fill:#2A2D34,stroke:#F7B801,color:#E8E6E3
-    style DB fill:#2A2D34,stroke:#5B8CFF,color:#E8E6E3
-    style IPC fill:#2A2D34,stroke:#5C5E66,color:#E8E6E3
-    style TRAY fill:#2A2D34,stroke:#F7B801,color:#E8E6E3
-    style HEAT fill:#2A2D34,stroke:#FF6B35,color:#E8E6E3
-    style KEYS fill:#2A2D34,stroke:#F7B801,color:#E8E6E3
-    style STATS fill:#2A2D34,stroke:#7ED957,color:#E8E6E3
-```
-
-### Event Flow
-
-```mermaid
-sequenceDiagram
-    participant OS as macOS / Windows
-    participant L as Listener Thread
-    participant B as Buffer Thread
-    participant DB as SQLite
-    participant FE as Frontend
-
-    OS->>L: Mouse move (x, y)
-    Note over L: Throttle: skip if < 50ms
-    L->>B: InputEvent via mpsc
-    OS->>L: Key press (key)
-    L->>B: InputEvent via mpsc
-
-    loop Every 100 events or 5s
-        B->>DB: BEGIN TRANSACTION
-        B->>DB: batch INSERT (prepared stmt)
-        B->>DB: COMMIT
-    end
-
-    FE->>DB: invoke('get_mouse_heatmap')
-    DB-->>FE: Vec<HeatmapPoint>
-    FE->>DB: invoke('get_key_frequency')
-    DB-->>FE: Vec<KeyFrequency>
-```
-
-### Product Roadmap
-
-```mermaid
-graph LR
-    P1["Phase 1<br/>Capture + Store<br/><b>DONE</b>"]
-    P2["Phase 2<br/>Dashboard<br/><b>DONE</b>"]
-    P3["Phase 3<br/>Polish + Controls"]
-    P4["Phase 4<br/>Weekly Reports"]
-    P5["Phase 5<br/>Focus Pet +<br/>Time Thief"]
-
-    P1 --> P2 --> P3 --> P4 --> P5
-
-    style P1 fill:#7ED957,stroke:#5C5E66,color:#1E1F24
-    style P2 fill:#7ED957,stroke:#5C5E66,color:#1E1F24
-    style P3 fill:#F7B801,stroke:#5C5E66,color:#1E1F24
-    style P4 fill:#2A2D34,stroke:#5C5E66,color:#E8E6E3
-    style P5 fill:#2A2D34,stroke:#FF6B35,color:#E8E6E3
 ```
 
 ## Project Structure
@@ -121,72 +106,72 @@ graph LR
 ClickGlow/
 ├── src-tauri/
 │   ├── src/
-│   │   ├── main.rs              # Entry point
+│   │   ├── main.rs              # Entry point, thread orchestration
 │   │   ├── lib.rs               # Module declarations
-│   │   ├── commands.rs          # Tauri IPC handlers
-│   │   ├── state.rs             # App state (DB, listener controls)
+│   │   ├── commands.rs          # 25+ Tauri IPC handlers
+│   │   ├── state.rs             # AppState (DB, paused, listener_status, distracted)
 │   │   ├── input/
-│   │   │   ├── listener.rs      # rdev global listener
-│   │   │   └── buffer.rs        # Event batching (100 events / 5s)
+│   │   │   ├── listener.rs      # rdev global listener (mouse + keyboard)
+│   │   │   └── buffer.rs        # Event batching (100 events / 5s flush)
 │   │   ├── db/
 │   │   │   ├── connection.rs    # SQLite connection (WAL mode)
-│   │   │   ├── schema.rs        # Migrations
-│   │   │   └── queries.rs       # Insert/select/aggregate
-│   │   ├── tray/                # System tray setup & menu
-│   │   └── reporting/           # Weekly report scheduler
-│   └── migrations/
-│       └── 001_initial.sql
-├── src/                         # Web frontend (vanilla JS)
-│   ├── index.html
-│   ├── css/styles.css
-│   └── js/
-│       ├── main.js              # App init, Tauri IPC
-│       ├── heatmap.js           # Mouse heatmap (heatmap.js lib)
-│       ├── keyboard-chart.js    # Key frequency (ECharts)
-│       └── dashboard.js         # Dashboard orchestration
+│   │   │   ├── schema.rs        # 4 migrations (v1-v4)
+│   │   │   └── queries.rs       # All DB queries + aggregation
+│   │   ├── tracking/
+│   │   │   ├── mod.rs           # Active window tracker + pet damage
+│   │   │   └── detector.rs      # macOS AppleScript window detection
+│   │   ├── pet/
+│   │   │   └── mod.rs           # Pet state machine (HP/XP/mood/evolution)
+│   │   ├── platform/
+│   │   │   └── macos.rs         # Accessibility permission FFI
+│   │   ├── tray/
+│   │   │   └── menu.rs          # System tray with pet mood icons
+│   │   └── reporting/
+│   │       └── mod.rs           # Weekly reports, aggregation, retention
+│   ├── migrations/
+│   │   ├── 001_initial.sql      # mouse_events, key_events, metadata
+│   │   ├── 002_hourly_stats.sql # hourly_stats, weekly_reports
+│   │   ├── 003_app_tracking.sql # app_events, app_categories
+│   │   └── 004_keyword_rules.sql # keyword-based category rules
+│   └── icons/
+│       ├── tray-happy.png       # Slime mood icons for menu bar
+│       ├── tray-angry.png
+│       ├── tray-sleeping.png
+│       └── tray-idle.png
+├── src/                          # Web frontend
+│   ├── index.html               # 8-tab dashboard + onboarding wizard
+│   ├── css/styles.css           # Cozy Game UI theme
+│   └── js/main.js               # All frontend logic
 ├── docs/
-│   └── todo.md
+│   ├── todo.md                  # Development checklist
+│   └── gamification-rules.md    # Pet system rules
 └── README.md
 ```
 
-## Data Schema
+## Gamification Rules
 
-```sql
--- Mouse events (moves + clicks)
-CREATE TABLE mouse_events (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_type  INTEGER NOT NULL,  -- 0=move, 1=left, 2=right, 3=middle
-    x           REAL NOT NULL,
-    y           REAL NOT NULL,
-    screen_w    INTEGER NOT NULL,
-    screen_h    INTEGER NOT NULL,
-    created_at  INTEGER NOT NULL   -- unix ms
-);
+| Action | Effect |
+|--------|--------|
+| Complete Pomodoro | +15 HP heal, +XP (= minutes focused) |
+| Visit distraction site | -3 HP every 10 seconds |
+| HP reaches 0 | Pet sleeps, focus streak resets |
+| 100 XP | Evolve: Slime -> Dragon |
+| 300 XP | Evolve: Dragon -> Wizard |
 
--- Keyboard events (key-down only)
-CREATE TABLE key_events (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    key_code    TEXT NOT NULL,      -- e.g. "KeyA", "Space", "ShiftLeft"
-    created_at  INTEGER NOT NULL   -- unix ms
-);
-```
+Distraction keywords (customizable): YouTube, Twitter/X, Reddit, Instagram, TikTok, Facebook, Netflix, Twitch
+
+See [docs/gamification-rules.md](docs/gamification-rules.md) for full details.
 
 ## Prerequisites
 
-- [Rust](https://rustup.rs/) (stable)
+- [Rust](https://rustup.rs/) (stable, 2024 edition)
 - [Tauri v2 CLI](https://v2.tauri.app/start/prerequisites/)
 - macOS: Grant **Accessibility** permission when prompted (System Settings > Privacy & Security > Accessibility)
 
 ## Development
 
 ```bash
-# Install Tauri CLI
-cargo install create-tauri-app --locked
-
-# Scaffold project (run from parent directory)
-cargo create-tauri-app
-
-# Dev mode
+# Dev mode (hot-reload frontend)
 cargo tauri dev
 
 # Build release
@@ -195,7 +180,7 @@ cargo tauri build
 
 ## Privacy
 
-ClickGlow stores all data in a local SQLite file (`~/.clickglow/data.db`). No data is ever transmitted over the network. No analytics. No telemetry. Your keystrokes and mouse data never leave your machine.
+ClickGlow stores all data in a local SQLite file (`~/Library/Application Support/clickglow/data.db`). No data is ever transmitted over the network. No analytics. No telemetry. Your keystrokes, mouse data, and app usage never leave your machine.
 
 ## License
 

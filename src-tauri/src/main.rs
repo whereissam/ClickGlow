@@ -58,6 +58,7 @@ fn main() {
             commands::get_retention_months,
             commands::set_retention_months,
             commands::save_png,
+            commands::save_png_base64,
             commands::get_app_usage,
             commands::get_category_breakdown,
             commands::get_time_thief,

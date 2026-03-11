@@ -140,8 +140,46 @@ pub fn save_png(data: Vec<u8>, filename: String) -> Result<String, String> {
         .or_else(dirs::desktop_dir)
         .ok_or("Cannot find Downloads folder")?;
     let path = downloads.join(&filename);
+    log::info!("Saving PNG: {} ({} bytes)", path.display(), data.len());
     std::fs::write(&path, &data).map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub fn save_png_base64(base64_data: String, filename: String) -> Result<String, String> {
+    use std::io::Write;
+    let downloads = dirs::download_dir()
+        .or_else(dirs::desktop_dir)
+        .ok_or("Cannot find Downloads folder")?;
+    let path = downloads.join(&filename);
+
+    // Decode base64
+    let decoded = base64_decode(&base64_data).map_err(|e| format!("Base64 decode error: {}", e))?;
+    log::info!("Saving PNG (base64): {} ({} bytes)", path.display(), decoded.len());
+
+    let mut file = std::fs::File::create(&path).map_err(|e| e.to_string())?;
+    file.write_all(&decoded).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+fn base64_decode(input: &str) -> Result<Vec<u8>, String> {
+    let table = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = Vec::new();
+    let mut buf: u32 = 0;
+    let mut bits = 0;
+    for &b in input.as_bytes() {
+        if b == b'=' || b == b'\n' || b == b'\r' { continue; }
+        let val = table.iter().position(|&c| c == b)
+            .ok_or_else(|| format!("Invalid base64 char: {}", b as char))? as u32;
+        buf = (buf << 6) | val;
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((buf >> bits) as u8);
+            buf &= (1 << bits) - 1;
+        }
+    }
+    Ok(out)
 }
 
 // ===== App Tracking =====
