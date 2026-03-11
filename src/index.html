@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClickGlow</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="logo">
+        <span class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <circle cx="14" cy="14" r="12" fill="url(#glow)" opacity="0.9"/>
+            <circle cx="14" cy="14" r="7" fill="#1E1F24"/>
+            <circle cx="14" cy="14" r="4" fill="url(#glow)"/>
+            <defs>
+              <linearGradient id="glow" x1="0" y1="0" x2="28" y2="28">
+                <stop stop-color="#F7B801"/>
+                <stop offset="1" stop-color="#FF6B35"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </span>
+        <span class="logo-text">ClickGlow</span>
+      </div>
+
+      <div class="nav-items">
+        <button class="nav-btn active" data-tab="dashboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          Dashboard
+        </button>
+        <button class="nav-btn" data-tab="heatmap">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity="0.5"/><circle cx="12" cy="12" r="10" opacity="0.25"/></svg>
+          Heatmap
+        </button>
+        <button class="nav-btn" data-tab="keyboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="14" y2="10"/><line x1="18" y1="10" x2="18" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+          Keyboard
+        </button>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="recording-indicator" id="recordingIndicator">
+          <span class="rec-dot"></span>
+          <span class="rec-text">Recording</span>
+        </div>
+        <div class="time-select">
+          <select id="timeRange">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+      <!-- Dashboard -->
+      <div id="dashboard-panel" class="panel active">
+        <div class="panel-header">
+          <h2>Overview</h2>
+          <button id="refreshBtn" class="btn-icon" title="Refresh">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card glow-card">
+            <div class="stat-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F7B801" stroke-width="2"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+            </div>
+            <div class="stat-value" id="totalClicks">0</div>
+            <div class="stat-label">Clicks</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7ED957" stroke-width="2"><path d="M5 9l7-7 7 7"/><path d="M12 2v14"/><path d="M19 16v3a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3"/></svg>
+            </div>
+            <div class="stat-value" id="totalMoves">0</div>
+            <div class="stat-label">Mouse Moves</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5B8CFF" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h0m4 0h0m4 0h0m4 0h0m-10 4h8"/></svg>
+            </div>
+            <div class="stat-value" id="totalKeystrokes">0</div>
+            <div class="stat-label">Keystrokes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="stat-value" id="topKey">-</div>
+            <div class="stat-label">Top Key</div>
+          </div>
+        </div>
+
+        <!-- Mini heatmap preview -->
+        <div class="preview-section">
+          <h3>Activity Preview</h3>
+          <div class="mini-heatmap-container" id="mini-heatmap-container"></div>
+        </div>
+      </div>
+
+      <!-- Heatmap -->
+      <div id="heatmap-panel" class="panel">
+        <div class="panel-header">
+          <h2>Mouse Heatmap</h2>
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="clicks">Clicks Only</button>
+            <button class="filter-btn" data-filter="moves">Movement</button>
+          </div>
+        </div>
+        <div id="heatmap-container"></div>
+      </div>
+
+      <!-- Keyboard -->
+      <div id="keyboard-panel" class="panel">
+        <div class="panel-header">
+          <h2>Keyboard Frequency</h2>
+        </div>
+        <div id="keyboard-chart"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/main.js" type="module"></script>
+</body>
+</html>

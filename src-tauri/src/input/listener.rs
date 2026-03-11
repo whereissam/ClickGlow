@@ -1,0 +1,132 @@
+use rdev::{Event, EventType, Key, Button};
+use std::sync::mpsc::Sender;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
+
+#[derive(Debug, Clone, Copy)]
+pub enum MouseButton {
+    Left = 1,
+    Right = 2,
+    Middle = 3,
+}
+
+#[derive(Debug, Clone)]
+pub enum InputEvent {
+    MouseMove {
+        x: f64,
+        y: f64,
+        screen_w: u32,
+        screen_h: u32,
+        timestamp: i64,
+    },
+    MouseClick {
+        x: f64,
+        y: f64,
+        button: MouseButton,
+        screen_w: u32,
+        screen_h: u32,
+        timestamp: i64,
+    },
+    KeyPress {
+        key_code: String,
+        timestamp: i64,
+    },
+}
+
+fn now_ms() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as i64
+}
+
+fn key_to_string(key: Key) -> String {
+    format!("{:?}", key)
+}
+
+fn button_to_enum(button: Button) -> MouseButton {
+    match button {
+        Button::Left => MouseButton::Left,
+        Button::Right => MouseButton::Right,
+        Button::Middle => MouseButton::Middle,
+        _ => MouseButton::Left,
+    }
+}
+
+fn screen_dimensions() -> (u32, u32) {
+    // TODO: Phase 3 — use platform-specific API for actual screen size
+    (1920, 1080)
+}
+
+/// Track last known mouse position for click events
+static LAST_MOUSE_X: std::sync::atomic::AtomicI64 = std::sync::atomic::AtomicI64::new(0);
+static LAST_MOUSE_Y: std::sync::atomic::AtomicI64 = std::sync::atomic::AtomicI64::new(0);
+
+pub fn start_listener(
+    tx: Sender<InputEvent>,
+    paused: Arc<AtomicBool>,
+) {
+    std::thread::spawn(move || {
+        let mut last_move = Instant::now();
+        let move_throttle = std::time::Duration::from_millis(50);
+
+        // IMPORTANT: Do NOT access event.name in the callback.
+        // On macOS, rdev's event.name calls TSMGetInputSourceProperty which
+        // must run on the main thread. Calling it from the listener thread
+        // causes a dispatch_assert_queue_fail crash.
+        let callback = move |event: Event| {
+            if paused.load(Ordering::Relaxed) {
+                return;
+            }
+
+            let ts = now_ms();
+            let (sw, sh) = screen_dimensions();
+
+            let input_event = match event.event_type {
+                EventType::MouseMove { x, y } => {
+                    // Store latest position for click events
+                    LAST_MOUSE_X.store(x.to_bits() as i64, Ordering::Relaxed);
+                    LAST_MOUSE_Y.store(y.to_bits() as i64, Ordering::Relaxed);
+
+                    if last_move.elapsed() < move_throttle {
+                        return;
+                    }
+                    last_move = Instant::now();
+                    Some(InputEvent::MouseMove {
+                        x, y,
+                        screen_w: sw,
+                        screen_h: sh,
+                        timestamp: ts,
+                    })
+                }
+                EventType::ButtonPress(button) => {
+                    let x = f64::from_bits(LAST_MOUSE_X.load(Ordering::Relaxed) as u64);
+                    let y = f64::from_bits(LAST_MOUSE_Y.load(Ordering::Relaxed) as u64);
+                    Some(InputEvent::MouseClick {
+                        x, y,
+                        button: button_to_enum(button),
+                        screen_w: sw,
+                        screen_h: sh,
+                        timestamp: ts,
+                    })
+                }
+                EventType::KeyPress(key) => {
+                    Some(InputEvent::KeyPress {
+                        key_code: key_to_string(key),
+                        timestamp: ts,
+                    })
+                }
+                _ => None,
+            };
+
+            if let Some(evt) = input_event {
+                let _ = tx.send(evt);
+            }
+        };
+
+        if let Err(e) = rdev::listen(callback) {
+            log::error!("Input listener error: {:?}", e);
+        }
+    });
+}
