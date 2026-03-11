@@ -102,11 +102,17 @@ pub fn compute_reaction(stats: &SystemStats, distracted: bool) -> BuddyReaction 
 
 fn pick_scold_message() -> String {
     let msgs = [
+        "Shouldn't you be coding?",
         "Hey! Focus!",
         "Back to work!",
         "I see you slacking...",
         "Your code misses you",
         "Procrastination detected!",
+        "That's not VS Code...",
+        "Your pet is watching you.",
+        "Close that tab. Now.",
+        "Is that really productive?",
+        "Your streak is crying rn",
     ];
     let idx = (std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -114,4 +120,105 @@ fn pick_scold_message() -> String {
         .as_millis()
         % msgs.len() as u128) as usize;
     msgs[idx].to_string()
+}
+
+/// Milestone thresholds (in minutes) for deep work celebration
+pub fn check_milestone(total_focus_mins: i32, streak: i32) -> Option<String> {
+    // Check session milestones
+    match total_focus_mins {
+        m if m >= 120 && m < 122 => Some("2 hours deep work! You're a machine!".to_string()),
+        m if m >= 60 && m < 62 => Some("1 hour focused! Keep it up!".to_string()),
+        m if m >= 180 && m < 182 => Some("3 HOURS! Legendary focus!".to_string()),
+        _ => None,
+    }
+    .or_else(|| {
+        // Check streak milestones
+        match streak {
+            3 => Some("3 sessions in a row! Hat trick!".to_string()),
+            5 => Some("5 streak! You're on fire!".to_string()),
+            10 => Some("10 STREAK! Absolute legend!".to_string()),
+            _ => None,
+        }
+    })
+}
+
+/// Boss fight state
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BossFight {
+    pub active: bool,
+    pub start_time: i64,        // ms timestamp
+    pub duration_mins: i32,     // target: 120 mins
+    pub elapsed_mins: i32,
+    pub distractions: i32,      // penalty count
+    pub hp: i32,                // boss HP 0-100
+}
+
+impl Default for BossFight {
+    fn default() -> Self {
+        Self {
+            active: false,
+            start_time: 0,
+            duration_mins: 120,
+            elapsed_mins: 0,
+            distractions: 0,
+            hp: 100,
+        }
+    }
+}
+
+impl BossFight {
+    pub fn start(&mut self) {
+        self.active = true;
+        self.start_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as i64;
+        self.elapsed_mins = 0;
+        self.distractions = 0;
+        self.hp = 100;
+    }
+
+    /// Tick the boss fight — call every minute
+    /// Returns a message if the fight state changed
+    pub fn tick(&mut self, distracted: bool) -> Option<String> {
+        if !self.active {
+            return None;
+        }
+
+        self.elapsed_mins += 1;
+
+        // Focused minute deals damage to boss
+        if !distracted {
+            let damage = 1; // ~1 HP per minute for 120 min fight
+            self.hp = (self.hp - damage).max(0);
+        } else {
+            self.distractions += 1;
+            // Boss heals on distraction
+            self.hp = (self.hp + 3).min(100);
+            return Some(format!("Boss healed! {} distractions so far...", self.distractions));
+        }
+
+        // Check victory
+        if self.hp <= 0 {
+            self.active = false;
+            return Some("BOSS DEFEATED! 2hr deep work complete!".to_string());
+        }
+
+        // Check timeout
+        if self.elapsed_mins >= self.duration_mins {
+            self.active = false;
+            if self.hp <= 20 {
+                return Some(format!("So close! Boss had {}HP left. Try again!", self.hp));
+            }
+            return Some(format!("Time's up! Boss had {}HP left.", self.hp));
+        }
+
+        // Progress milestones
+        match self.elapsed_mins {
+            30 => Some(format!("30min in! Boss at {}HP — keep attacking!", self.hp)),
+            60 => Some(format!("Halfway there! Boss at {}HP!", self.hp)),
+            90 => Some(format!("90min! Almost there! Boss at {}HP!", self.hp)),
+            _ => None,
+        }
+    }
 }

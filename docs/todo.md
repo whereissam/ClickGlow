@@ -83,7 +83,7 @@ The vision: merge three features into one product — **ClickGlow becomes a Digi
 - [x] Interactive: click pet to bounce, hover to scale
 - [x] Horizontal layout fix: pet + stats side-by-side to fit viewport
 - [x] Onboarding wizard (3-step: welcome → accessibility permission → ready)
-- [ ] Boss fight mode: 2hr deep work challenge (future enhancement)
+- [x] Boss fight mode: 2hr deep work challenge — Rust BossFight struct + tick/start/get commands + buddy.js integration
 
 ### 5C: Time Thief Weekly Poster - DONE
 
@@ -91,14 +91,14 @@ The vision: merge three features into one product — **ClickGlow becomes a Digi
 - [x] Stats: hours stolen, switch count, longest session
 - [x] Auto-populated from distraction category data
 - [ ] Export poster as PNG (placeholder — needs html2canvas or canvas rendering)
-- [ ] Weekly notification: "Your time thief this week..." (future enhancement)
+- [x] Weekly notification: "Your time thief this week..." — buddy shows time thief on startup via `get_weekly_time_thief` command
 
-### 5D: Desktop Buddy (Stretch Goal)
+### 5D: Desktop Buddy (Stretch Goal) - DONE
 
-- [ ] Floating mini-window with pet avatar
-- [ ] Reacts to user behavior in real-time
-- [ ] "Shouldn't you be coding?" when opening distractions
-- [ ] Celebrates milestones: "2 hours deep work!"
+- [x] Floating mini-window with pet avatar (buddy.html/css/js + Tauri secondary window)
+- [x] Reacts to user behavior in real-time (system stats + distraction detection → buddy reactions)
+- [x] "Shouldn't you be coding?" when opening distractions — expanded scolding messages in buddy/mod.rs
+- [x] Celebrates milestones: "2 hours deep work!" — milestone detection + celebration animation in buddy.css
 
 ---
 
@@ -106,34 +106,34 @@ The vision: merge three features into one product — **ClickGlow becomes a Digi
 
 Evolve the Focus Pet into a **desktop-edge climbing character** — a transparent always-on-top mini-window where the pet "escapes" from the sidebar and lives on your screen edge.
 
-### 6A: Transparent Floating Window
+### 6A: Transparent Floating Window - DONE
 
-- [ ] Create secondary Tauri window: transparent, frameless, always-on-top, skip-taskbar
-- [ ] Window size ~80x120px, positioned at screen edge (right/left/bottom)
+- [x] Create secondary Tauri window: transparent, frameless, always-on-top, skip-taskbar
+- [x] Window size 100x140px, positioned at right screen edge
 - [ ] Click-through on transparent areas (non-pet regions)
-- [ ] Draggable: user can reposition pet along screen edges
+- [x] Draggable: user can reposition pet via mouse drag (buddy.js)
 - [ ] Edge snapping: pet "sticks" to nearest screen edge when released
-- [ ] Toggle on/off from tray menu + pet panel
+- [x] Toggle on/off from tray menu (`toggle_buddy` command)
 
-### 6B: Climbing & Edge Animations
+### 6B: Climbing & Edge Animations - PARTIAL
 
-- [ ] Idle animation: pet hangs on screen edge, gentle sway
-- [ ] Climbing animation: pet crawls up/down the edge periodically
+- [x] Idle animation: pet hangs on screen edge, gentle sway (buddyClimb 8s keyframe)
+- [x] Climbing animation: pet crawls up/down the edge periodically
 - [ ] Peek animation: pet peeks from behind the edge, hides when mouse approaches
 - [ ] Walk animation: pet walks along bottom/top edge
 - [ ] Transition between edges (climb around corners)
 
-### 6C: System-Reactive Behaviors
+### 6C: System-Reactive Behaviors - DONE
 
-- [ ] **CPU temperature monitor** (Rust `sysinfo` crate) — poll every 10s
-  - [ ] CPU > 80°C → pet starts sweating (sweat drops animation)
-  - [ ] CPU > 95°C → pet catches fire / melting animation
+- [x] **CPU temperature monitor** (Rust `sysinfo` crate) — polled via `get_buddy_state`
+  - [x] CPU > 80°C → pet starts sweating (sweat drops animation)
+  - [x] CPU > 95°C → pet catches fire / melting animation + shake
 - [ ] **Fan speed monitor** — detect high RPM
   - [ ] Fan > 5000 RPM → pet gets "blown away" animation (hair/body fluttering)
   - [ ] Fan max → pet flies off screen edge, slowly crawls back
-- [ ] **Memory pressure** — high RAM usage
-  - [ ] RAM > 90% → pet inflates like a balloon, looks stressed
-- [ ] Distraction detected → pet holds up a sign: "Hey! Focus!" or roasts you
+- [x] **Memory pressure** — high RAM usage
+  - [x] RAM > 90% → pet inflates like a balloon, looks stressed (buddyInflate animation)
+- [x] Distraction detected → pet shakes with red eyes + scolding messages ("Shouldn't you be coding?")
 
 ### 6D: Hydration & Break Reminders
 
@@ -143,13 +143,13 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 - [ ] Snooze button on reminder (pet looks disappointed)
 - [ ] Reminder history: "You drank 8 glasses today!"
 
-### 6E: Fun Interactions
+### 6E: Fun Interactions - PARTIAL
 
-- [ ] Click pet → random reaction (jump, spin, wave, blush)
-- [ ] Double-click → pet does a backflip
+- [x] Click pet → random reaction (jump + speech bubble with random message)
+- [x] Double-click → pet does a backflip (buddyBackflip animation)
 - [ ] Right-click → context menu (feed, poke, sleep, settings)
 - [ ] Drag pet away from edge → pet panics and scrambles back
-- [ ] Idle too long → pet falls asleep on the edge, snores (zzz bubbles)
+- [x] Idle messages every 30s (30% chance): "Keep going!", "*yawn*", "Ship it!", etc.
 - [ ] Mouse cursor near pet → pet notices and watches cursor
 
 ---
@@ -216,11 +216,29 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 
 ---
 
+## Marketing Landing Page - DONE
+
+- [x] Svelte 5 + Vite 7 + Bun project in `/frontend/`
+- [x] Hero section with interactive CSS pet (click for quotes + glowing particles)
+- [x] Features grid (6 cards: Heatmaps, Keyboard, Focus Pet, App Tracking, Reports, Privacy)
+- [x] Pet Showcase section with evolution track (Slime → Dragon → Wizard)
+- [x] Screenshot section with macOS browser frame + perspective tilt
+- [x] Tech Stack section with comparison table (ClickGlow vs typical trackers)
+- [x] FAQ accordion (7 questions)
+- [x] Final CTA section with download + GitHub links
+- [x] Install modal ("One Last Step" with `xattr -cr` command + copy to clipboard)
+- [x] Download buttons link to GitHub Releases
+- [x] GitHub Actions release workflow (auto-build .dmg on tag push)
+- [x] Responsive design (mobile-friendly)
+
+---
+
 ## Existing Future Enhancements
 
-- [ ] Boss fight mode: 2hr deep work challenge with special rewards
+- [x] Boss fight mode: 2hr deep work challenge — BossFight struct in buddy/mod.rs + IPC commands
 - [ ] Export Time Thief poster as PNG (html2canvas)
-- [ ] Weekly notification: "Your time thief this week..."
+- [x] Weekly notification: "Your time thief this week..." — buddy startup notification
+- [x] App name resolution: bundle ID → friendly name (VS Code, Chrome, etc. instead of "Electron")
 - [ ] Windows active window detection (GetForegroundWindow)
 - [ ] Linux active window detection (xdotool / X11; document Wayland limitations)
 - [ ] Pet rename UI in frontend

@@ -79,6 +79,11 @@ fn main() {
             commands::get_buddy_state,
             commands::toggle_buddy,
             commands::set_buddy_position,
+            commands::check_milestone,
+            commands::start_boss_fight,
+            commands::get_boss_fight,
+            commands::tick_boss_fight,
+            commands::get_weekly_time_thief,
         ])
         .setup(move |app| {
             // Create buddy floating window

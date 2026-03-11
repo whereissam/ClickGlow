@@ -326,6 +326,73 @@ pub fn toggle_buddy(app: tauri::AppHandle) -> Result<bool, String> {
     }
 }
 
+/// Check for focus milestones
+#[tauri::command]
+pub fn check_milestone(state: State<AppState>) -> Option<String> {
+    let pet = pet::load_pet(&state.db);
+    buddy::check_milestone(pet.total_focus_mins, pet.focus_streak)
+}
+
+/// Start a boss fight (2hr deep work challenge)
+#[tauri::command]
+pub fn start_boss_fight(state: State<AppState>) -> Result<buddy::BossFight, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let mut boss = buddy::BossFight::default();
+    boss.start();
+    let json = serde_json::to_string(&boss).map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "boss_fight", &json).map_err(|e| e.to_string())?;
+    Ok(boss)
+}
+
+/// Get current boss fight state
+#[tauri::command]
+pub fn get_boss_fight(state: State<AppState>) -> buddy::BossFight {
+    let conn = match state.db.conn.lock() {
+        Ok(c) => c,
+        Err(_) => return buddy::BossFight::default(),
+    };
+    match queries::get_metadata(&conn, "boss_fight") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => buddy::BossFight::default(),
+    }
+}
+
+/// Tick the boss fight (called every minute from frontend)
+#[tauri::command]
+pub fn tick_boss_fight(state: State<AppState>) -> Result<(buddy::BossFight, Option<String>), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let mut boss: buddy::BossFight = match queries::get_metadata(&conn, "boss_fight") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => return Ok((buddy::BossFight::default(), None)),
+    };
+    let distracted = state.distracted.load(Ordering::Relaxed);
+    let msg = boss.tick(distracted);
+    let json = serde_json::to_string(&boss).map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "boss_fight", &json).map_err(|e| e.to_string())?;
+    Ok((boss, msg))
+}
+
+/// Get time thief summary for buddy notification
+#[tauri::command]
+pub fn get_weekly_time_thief(state: State<AppState>) -> Result<Option<String>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as i64;
+    let week_ago = now - 7 * 24 * 60 * 60 * 1000;
+    match queries::get_time_thief(&conn, week_ago, now) {
+        Ok(Some(thief)) => {
+            let hours = thief.hours_stolen;
+            Ok(Some(format!(
+                "Your time thief this week: {} ({:.1}h). Watch out!",
+                thief.app_name, hours
+            )))
+        }
+        _ => Ok(None),
+    }
+}
+
 #[tauri::command]
 pub fn set_buddy_position(app: tauri::AppHandle, x: f64, y: f64) -> Result<(), String> {
     use tauri::Manager;

@@ -9,6 +9,7 @@ let bubbleTimer = null;
 let isDragging = false;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
+let bossTickInterval = null;
 
 // ===== Poll pet state + system stats =====
 
@@ -24,12 +25,17 @@ async function updateBuddy() {
     buddyPet.setAttribute('data-mood', pet.mood);
     buddyPet.setAttribute('data-reaction', reaction.state);
 
-    // Update grip hand colors via species
-    // (handled by CSS sibling selectors)
-
     // Show speech bubble if there's a message
     if (reaction.message) {
       showBubble(reaction.message);
+    }
+
+    // Check milestones
+    const milestone = await invoke('check_milestone');
+    if (milestone) {
+      showBubble(milestone, 6000);
+      buddyPet.classList.add('celebrating');
+      setTimeout(() => buddyPet.classList.remove('celebrating'), 3000);
     }
   } catch (e) {
     console.error('Buddy update error:', e);
@@ -84,9 +90,12 @@ function pickRandomReaction() {
     'Boing!',
     'Hehe~',
     'Stop poking me!',
-    'I\'m working here!',
+    "I'm working here!",
     ':3',
     'Need something?',
+    "Shouldn't you be coding?",
+    'Focus! Focus! Focus!',
+    '*happy wiggle*',
   ];
   return reactions[Math.floor(Math.random() * reactions.length)];
 }
@@ -108,7 +117,6 @@ document.addEventListener('mousemove', async (e) => {
   dragOffsetX = e.screenX;
   dragOffsetY = e.screenY;
 
-  // Get current window position and move it
   try {
     const { getCurrentWindow } = window.__TAURI__.window;
     const win = getCurrentWindow();
@@ -137,16 +145,88 @@ const idleMessages = [
   '...',
   '*yawn*',
   'Nice weather today',
-  'You\'re doing great!',
+  "You're doing great!",
   '*stretches*',
   'Focus mode!',
+  'Code hard, nap harder',
+  'Ship it!',
+  '*does a little dance*',
 ];
 
 setInterval(() => {
-  // Only show idle messages if no active reaction
   const reaction = buddyPet.getAttribute('data-reaction');
   if (reaction === 'normal' && Math.random() < 0.3) {
     const msg = idleMessages[Math.floor(Math.random() * idleMessages.length)];
     showBubble(msg, 3000);
   }
-}, 30000); // Every 30 seconds, 30% chance
+}, 30000);
+
+// ===== Boss Fight Mode (2hr deep work challenge) =====
+
+async function startBossFight() {
+  try {
+    const boss = await invoke('start_boss_fight');
+    showBubble('BOSS FIGHT! 2hr deep work challenge!', 5000);
+    buddyPet.setAttribute('data-boss', 'active');
+    startBossTick();
+    return boss;
+  } catch (e) {
+    console.error('Boss fight start error:', e);
+  }
+}
+
+function startBossTick() {
+  if (bossTickInterval) clearInterval(bossTickInterval);
+  bossTickInterval = setInterval(async () => {
+    try {
+      const [boss, msg] = await invoke('tick_boss_fight');
+      if (msg) {
+        showBubble(msg, 5000);
+      }
+      if (!boss.active) {
+        clearInterval(bossTickInterval);
+        bossTickInterval = null;
+        buddyPet.removeAttribute('data-boss');
+        if (boss.hp <= 0) {
+          // Victory celebration
+          buddyPet.classList.add('celebrating');
+          setTimeout(() => buddyPet.classList.remove('celebrating'), 5000);
+        }
+      }
+    } catch (e) {
+      console.error('Boss tick error:', e);
+    }
+  }, 60000); // Tick every minute
+}
+
+// Check if boss fight was already active on load
+(async () => {
+  try {
+    const boss = await invoke('get_boss_fight');
+    if (boss.active) {
+      buddyPet.setAttribute('data-boss', 'active');
+      startBossTick();
+      showBubble(`Boss fight in progress! ${boss.hp}HP left!`, 4000);
+    }
+  } catch (e) {
+    // ignore
+  }
+})();
+
+// Expose to window for context menu / main app
+window.startBossFight = startBossFight;
+
+// ===== Weekly Time Thief Notification =====
+
+// Check once on startup (will show the bubble if there's a thief)
+(async () => {
+  try {
+    const msg = await invoke('get_weekly_time_thief');
+    if (msg) {
+      // Delay so it doesn't conflict with other startup messages
+      setTimeout(() => showBubble(msg, 6000), 10000);
+    }
+  } catch (e) {
+    // ignore
+  }
+})();
