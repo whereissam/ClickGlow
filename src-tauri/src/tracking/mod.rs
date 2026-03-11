@@ -13,7 +13,7 @@ const PET_DAMAGE_PER_TICK: i32 = 3; // HP lost per 2s of distraction
 /// Start the active window tracking thread.
 /// Polls every 2s, records app transitions with duration.
 /// Also damages the pet in real-time when distractions are detected.
-pub fn start_tracker(db: Arc<Database>, paused: Arc<AtomicBool>) {
+pub fn start_tracker(db: Arc<Database>, paused: Arc<AtomicBool>, distracted: Arc<AtomicBool>) {
     std::thread::spawn(move || {
         log::info!("Window tracker started");
 
@@ -45,6 +45,8 @@ pub fn start_tracker(db: Arc<Database>, paused: Arc<AtomicBool>) {
                     Err(_) => false,
                 }
             };
+
+            distracted.store(is_distraction, Ordering::Relaxed);
 
             if is_distraction {
                 distraction_ticks += 1;

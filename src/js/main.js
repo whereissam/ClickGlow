@@ -719,36 +719,86 @@ let pomodoroSecondsLeft = 25 * 60;
 let pomodoroRunning = false;
 let petPollTimer = null;
 
+const distractionQuotes = [
+  "Hey! YouTube won't code itself! 🫠",
+  "Your pet is DYING and you're watching cat videos?!",
+  "Plot twist: the deadline is tomorrow 💀",
+  "Netflix & chill? More like Netflix & skill-drain",
+  "Your pet just filed a complaint to HR",
+  "Every second on Reddit costs 1 brain cell",
+  "Touch grass... I mean, touch keyboard! ⌨️",
+  "Your future self is judging you right now",
+  "This is fine. Everything is fine. 🔥",
+  "POV: you explaining to your boss why the feature isn't done",
+];
+
 async function loadPetPanel() {
   try {
     const pet = await invoke('get_pet');
-    updatePetUI(pet);
+    const distracted = await invoke('is_distracted');
+    updatePetUI(pet, distracted);
   } catch (e) {
     console.error('Failed to load pet:', e);
   }
-  // Poll pet state every 5s while on Pet tab
+  // Poll pet state every 3s while on Pet tab
   if (petPollTimer) clearInterval(petPollTimer);
   petPollTimer = setInterval(async () => {
     try {
       const pet = await invoke('get_pet');
-      updatePetUI(pet);
+      const distracted = await invoke('is_distracted');
+      updatePetUI(pet, distracted);
     } catch (_) {}
-  }, 5000);
+  }, 3000);
 }
 
-function updatePetUI(pet) {
+function updatePetUI(pet, distracted = false) {
   const creature = document.getElementById('petCreature');
+  const petScene = document.querySelector('.pet-scene');
   creature.setAttribute('data-species', pet.species);
-  creature.setAttribute('data-mood', pet.mood);
+
+  // Override mood to angry when distracted, regardless of HP
+  if (distracted) {
+    creature.setAttribute('data-mood', 'angry');
+    petScene.classList.add('distracted');
+  } else {
+    creature.setAttribute('data-mood', pet.mood);
+    petScene.classList.remove('distracted');
+  }
 
   document.getElementById('petNameTag').textContent = pet.name;
   document.getElementById('petLevel').textContent = pet.level;
   document.getElementById('petSpecies').textContent = pet.species;
   document.getElementById('petStreak').textContent = pet.focus_streak;
 
-  // HP bar
+  // Distraction warning message
+  let warningEl = document.getElementById('petWarning');
+  if (!warningEl) {
+    warningEl = document.createElement('div');
+    warningEl.id = 'petWarning';
+    warningEl.className = 'pet-warning';
+    document.querySelector('.pet-scene').appendChild(warningEl);
+  }
+  if (distracted) {
+    const quote = distractionQuotes[Math.floor(Math.random() * distractionQuotes.length)];
+    warningEl.textContent = quote;
+    warningEl.style.display = 'block';
+  } else {
+    warningEl.style.display = 'none';
+  }
+
+  // HP bar with gradient color based on HP level
   const hpPct = Math.max(0, Math.min(100, (pet.hp / pet.max_hp) * 100));
-  document.getElementById('petHpFill').style.width = hpPct + '%';
+  const hpFill = document.getElementById('petHpFill');
+  hpFill.style.width = hpPct + '%';
+  if (hpPct > 60) {
+    hpFill.style.background = 'linear-gradient(90deg, #4ade80, #22c55e)';
+  } else if (hpPct > 40) {
+    hpFill.style.background = 'linear-gradient(90deg, #facc15, #eab308)';
+  } else if (hpPct > 20) {
+    hpFill.style.background = 'linear-gradient(90deg, #fb923c, #f97316)';
+  } else {
+    hpFill.style.background = 'linear-gradient(90deg, #f87171, #ef4444)';
+  }
   document.getElementById('petHpText').textContent = `${pet.hp}/${pet.max_hp}`;
 
   // XP bar

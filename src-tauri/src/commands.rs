@@ -194,6 +194,11 @@ pub fn get_pet(state: State<AppState>) -> PetState {
 }
 
 #[tauri::command]
+pub fn is_distracted(state: State<AppState>) -> bool {
+    state.distracted.load(Ordering::Relaxed)
+}
+
+#[tauri::command]
 pub fn feed_pet(state: State<AppState>, focus_mins: i32) -> Result<PetState, String> {
     let mut p = pet::load_pet(&state.db);
     p.feed(focus_mins);

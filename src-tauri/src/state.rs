@@ -12,4 +12,5 @@ pub struct AppState {
     pub db: Arc<Database>,
     pub paused: Arc<AtomicBool>,
     pub listener_status: Arc<AtomicU8>,
+    pub distracted: Arc<AtomicBool>,
 }

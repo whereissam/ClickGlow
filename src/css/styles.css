@@ -901,6 +901,47 @@ main {
   animation-duration: 0.5s !important;
 }
 
+/* Distraction mode: pet scene shakes and glows red */
+.pet-scene.distracted {
+  animation: distractionShake 0.3s ease-in-out infinite;
+}
+
+.pet-scene.distracted .pet-creature .pet-body {
+  filter: hue-rotate(-30deg) saturate(2) brightness(0.9);
+  box-shadow: 0 0 20px rgba(255, 50, 50, 0.6), 0 0 40px rgba(255, 50, 50, 0.3);
+}
+
+@keyframes distractionShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px) rotate(-1deg); }
+  75% { transform: translateX(3px) rotate(1deg); }
+}
+
+.pet-warning {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 10;
+  animation: warningPulse 1s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(255, 0, 0, 0.4);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes warningPulse {
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+}
+
 .pet-creature[data-mood="sleeping"] .pet-eye {
   height: 2px;
   animation: none;

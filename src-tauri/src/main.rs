@@ -18,6 +18,7 @@ fn main() {
     let db = Arc::new(Database::new().expect("Failed to initialize database"));
     let paused = Arc::new(AtomicBool::new(false));
     let listener_status = Arc::new(AtomicU8::new(0));
+    let distracted = Arc::new(AtomicBool::new(false));
 
     // Start input listener -> buffer -> DB pipeline
     // Dropping `tx` on shutdown will cause the buffer thread to flush and exit
@@ -25,12 +26,13 @@ fn main() {
     listener::start_listener(tx, paused.clone(), listener_status.clone());
     buffer::start_buffer(rx, db.clone());
     reporting::start_scheduler(db.clone());
-    tracking::start_tracker(db.clone(), paused.clone());
+    tracking::start_tracker(db.clone(), paused.clone(), distracted.clone());
 
     let app_state = AppState {
         db: db.clone(),
         paused: paused.clone(),
         listener_status: listener_status.clone(),
+        distracted: distracted.clone(),
     };
 
     tauri::Builder::default()
@@ -61,6 +63,7 @@ fn main() {
             commands::get_time_thief,
             commands::set_app_category,
             commands::get_pet,
+            commands::is_distracted,
             commands::feed_pet,
             commands::damage_pet,
             commands::rename_pet,
