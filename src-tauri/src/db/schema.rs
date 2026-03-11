@@ -2,6 +2,7 @@ use rusqlite::Connection;
 
 const MIGRATION_V1: &str = include_str!("../../migrations/001_initial.sql");
 const MIGRATION_V2: &str = include_str!("../../migrations/002_hourly_stats.sql");
+const MIGRATION_V3: &str = include_str!("../../migrations/003_app_tracking.sql");
 
 pub fn run_migrations(conn: &Connection) -> Result<(), Box<dyn std::error::Error>> {
     let version: i32 = conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
@@ -16,6 +17,12 @@ pub fn run_migrations(conn: &Connection) -> Result<(), Box<dyn std::error::Error
         conn.execute_batch(MIGRATION_V2)?;
         conn.pragma_update(None, "user_version", 2)?;
         log::info!("Ran migration v2 (hourly_stats + weekly_reports)");
+    }
+
+    if version < 3 {
+        conn.execute_batch(MIGRATION_V3)?;
+        conn.pragma_update(None, "user_version", 3)?;
+        log::info!("Ran migration v3 (app_events + app_categories)");
     }
 
     Ok(())

@@ -59,35 +59,39 @@
 - [ ] Windows testing and platform-specific fixes
 - [ ] Linux testing (X11; document Wayland limitations)
 
-## Phase 5: Focus Pet + Time Thief (Product Evolution)
+## Phase 5: Focus Pet + Time Thief (Product Evolution) - DONE
 
 The vision: merge three features into one product — **ClickGlow becomes a Digital Life Simulator**.
 
-### 5A: Active Window Tracking
+### 5A: Active Window Tracking - DONE
 
-- [ ] Add `active-win-pos-rs` crate for foreground window detection
-- [ ] Create `app_events` table (app_name, window_title, duration_ms, created_at)
-- [ ] Poll active window every 2s, store transitions
-- [ ] Categorize apps: productive / neutral / distraction (user-configurable)
-- [ ] Add app usage chart to dashboard (time per app, pie chart)
+- [x] macOS active window detection via AppleScript (`osascript`) — no extra crate needed
+- [x] `app_events` table + `app_categories` table (migration v3)
+- [x] Background thread polls every 2s, records app transitions with duration
+- [x] Categorize apps: productive / neutral / distraction (auto + user-configurable)
+- [x] Apps tab: category pie chart + top apps bar chart (color-coded by category)
+- [x] Window title keyword detection for distractions (YouTube, Twitter, Reddit, etc.)
 
-### 5B: Focus Pet (Tamagotchi x Productivity)
+### 5B: Focus Pet (Tamagotchi x Productivity) - DONE
 
-- [ ] Design pet system: HP, XP, Level, Mood
-- [ ] Canvas-based pet animation (idle, happy, angry, sleeping)
-- [ ] Pomodoro timer integration (25min focus = feed pet)
-- [ ] Distraction detection: if browser title contains YouTube/Twitter/Reddit → pet loses HP
-- [ ] Pet evolution: Lv1 Slime → Lv2 Dragon → Lv3 Wizard
-- [ ] Focus streak tracking (like GitHub contributions)
-- [ ] Boss fight mode: 2hr deep work challenge
+- [x] Pet system: HP, XP, Level, Mood, species — stored as JSON in metadata
+- [x] CSS-animated pet creature (slime/dragon/wizard) with mood states (idle, happy, angry, sleeping)
+- [x] Pomodoro timer with configurable duration (15/25/30/45/60/90/120 min) → feed pet
+- [x] Distraction detection via window title keywords → pet takes damage
+- [x] Pet evolution: Lv1 Slime → Lv2 Dragon → Lv3 Wizard (auto-evolves at XP thresholds)
+- [x] Focus streak tracking (consecutive sessions counter)
+- [x] Interactive: click pet to bounce, hover to scale
+- [x] Horizontal layout fix: pet + stats side-by-side to fit viewport
+- [x] Onboarding wizard (3-step: welcome → accessibility permission → ready)
+- [ ] Boss fight mode: 2hr deep work challenge (future enhancement)
 
-### 5C: Time Thief Weekly Poster
+### 5C: Time Thief Weekly Poster - DONE
 
-- [ ] Generate "WANTED" poster for top time-wasting app
-- [ ] Western-style poster template (canvas rendering)
-- [ ] Stats: hours stolen, number of switches, longest session
-- [ ] Export as PNG for sharing
-- [ ] Weekly notification: "Your time thief this week..."
+- [x] "WANTED" poster UI for top time-wasting app (western style, gold/brown theme)
+- [x] Stats: hours stolen, switch count, longest session
+- [x] Auto-populated from distraction category data
+- [ ] Export poster as PNG (placeholder — needs html2canvas or canvas rendering)
+- [ ] Weekly notification: "Your time thief this week..." (future enhancement)
 
 ### 5D: Desktop Buddy (Stretch Goal)
 
@@ -95,3 +99,18 @@ The vision: merge three features into one product — **ClickGlow becomes a Digi
 - [ ] Reacts to user behavior in real-time
 - [ ] "Shouldn't you be coding?" when opening distractions
 - [ ] Celebrates milestones: "2 hours deep work!"
+
+---
+
+## Future Enhancements
+
+- [ ] Boss fight mode: 2hr deep work challenge with special rewards
+- [ ] Export Time Thief poster as PNG (html2canvas)
+- [ ] Weekly notification: "Your time thief this week..."
+- [ ] Windows active window detection (GetForegroundWindow)
+- [ ] Linux active window detection (xdotool / X11; document Wayland limitations)
+- [ ] Pet rename UI in frontend
+- [ ] App category editor UI (add/remove/change categories)
+- [ ] Focus streak heatmap (GitHub-style contribution grid)
+- [ ] Sound effects for pet interactions
+- [ ] Dark/light theme toggle

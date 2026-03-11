@@ -1,8 +1,15 @@
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::db::connection::Database;
 use crate::db::queries;
+
+pub fn now_ms_util() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as i64
+}
 
 /// Start background thread that:
 /// 1. Checks once per hour if a new weekly report needs generating

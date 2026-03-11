@@ -456,3 +456,129 @@ pub fn delete_old_events(conn: &Connection, before_ms: i64) -> Result<(usize, us
     )?;
     Ok((mouse_deleted, key_deleted))
 }
+
+// ===== App Tracking =====
+
+#[derive(Debug, Serialize, Clone)]
+pub struct AppUsage {
+    pub app_name: String,
+    pub category: String,
+    pub total_duration_ms: i64,
+    pub session_count: u64,
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct TimeThief {
+    pub app_name: String,
+    pub hours_stolen: f64,
+    pub switch_count: u64,
+    pub longest_session_ms: i64,
+}
+
+/// Get app usage stats for a time range
+pub fn get_app_usage(
+    conn: &Connection,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<AppUsage>, rusqlite::Error> {
+    let mut stmt = conn.prepare(
+        "SELECT app_name, category, SUM(duration_ms) as total, COUNT(*) as cnt
+         FROM app_events
+         WHERE created_at >= ?1 AND created_at <= ?2
+         GROUP BY app_name
+         ORDER BY total DESC
+         LIMIT 30"
+    )?;
+
+    let rows = stmt.query_map(rusqlite::params![start_ms, end_ms], |row| {
+        Ok(AppUsage {
+            app_name: row.get(0)?,
+            category: row.get(1)?,
+            total_duration_ms: row.get(2)?,
+            session_count: row.get(3)?,
+        })
+    })?;
+
+    rows.collect()
+}
+
+/// Get category breakdown (productive/neutral/distraction time)
+pub fn get_category_breakdown(
+    conn: &Connection,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<(String, i64)>, rusqlite::Error> {
+    let mut stmt = conn.prepare(
+        "SELECT category, SUM(duration_ms) as total
+         FROM app_events
+         WHERE created_at >= ?1 AND created_at <= ?2
+         GROUP BY category
+         ORDER BY total DESC"
+    )?;
+
+    let rows = stmt.query_map(rusqlite::params![start_ms, end_ms], |row| {
+        Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+    })?;
+
+    rows.collect()
+}
+
+/// Get the top time thief (most distracting app)
+pub fn get_time_thief(
+    conn: &Connection,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Option<TimeThief>, rusqlite::Error> {
+    let result = conn.query_row(
+        "SELECT app_name,
+                SUM(duration_ms) / 3600000.0 as hours,
+                COUNT(*) as switches,
+                MAX(duration_ms) as longest
+         FROM app_events
+         WHERE created_at >= ?1 AND created_at <= ?2
+           AND category = 'distraction'
+         GROUP BY app_name
+         ORDER BY hours DESC
+         LIMIT 1",
+        rusqlite::params![start_ms, end_ms],
+        |row| {
+            Ok(TimeThief {
+                app_name: row.get(0)?,
+                hours_stolen: row.get(1)?,
+                switch_count: row.get(2)?,
+                longest_session_ms: row.get(3)?,
+            })
+        },
+    ).optional()?;
+
+    Ok(result)
+}
+
+/// Set app category override
+pub fn set_app_category(conn: &Connection, app_name: &str, category: &str) -> Result<(), rusqlite::Error> {
+    conn.execute(
+        "INSERT INTO app_categories (app_name, category) VALUES (?1, ?2)
+         ON CONFLICT(app_name) DO UPDATE SET category = ?2",
+        rusqlite::params![app_name, category],
+    )?;
+    Ok(())
+}
+
+/// Get all app category overrides
+pub fn get_app_categories(conn: &Connection) -> Result<Vec<(String, String)>, rusqlite::Error> {
+    let mut stmt = conn.prepare("SELECT app_name, category FROM app_categories ORDER BY app_name")?;
+    let rows = stmt.query_map([], |row| {
+        Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+    })?;
+    rows.collect()
+}
+
+/// Get distraction time in the last N minutes (for pet damage calculation)
+pub fn get_recent_distraction_ms(conn: &Connection, since_ms: i64) -> Result<i64, rusqlite::Error> {
+    conn.query_row(
+        "SELECT COALESCE(SUM(duration_ms), 0) FROM app_events
+         WHERE created_at >= ?1 AND category = 'distraction'",
+        rusqlite::params![since_ms],
+        |row| row.get(0),
+    )
+}

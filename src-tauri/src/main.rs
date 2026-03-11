@@ -9,6 +9,7 @@ use clickglow::db::connection::Database;
 use clickglow::input::{buffer, listener};
 use clickglow::reporting;
 use clickglow::state::AppState;
+use clickglow::tracking;
 use clickglow::tray::menu;
 
 fn main() {
@@ -24,6 +25,7 @@ fn main() {
     listener::start_listener(tx, paused.clone(), listener_status.clone());
     buffer::start_buffer(rx, db.clone());
     reporting::start_scheduler(db.clone());
+    tracking::start_tracker(db.clone(), paused.clone());
 
     let app_state = AppState {
         db: db.clone(),
@@ -54,6 +56,14 @@ fn main() {
             commands::get_retention_months,
             commands::set_retention_months,
             commands::save_png,
+            commands::get_app_usage,
+            commands::get_category_breakdown,
+            commands::get_time_thief,
+            commands::set_app_category,
+            commands::get_pet,
+            commands::feed_pet,
+            commands::damage_pet,
+            commands::rename_pet,
         ])
         .setup(move |app| {
             menu::setup_tray(app.handle(), paused.clone(), listener_status.clone())

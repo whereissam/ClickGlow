@@ -1,7 +1,8 @@
 use std::sync::atomic::Ordering;
 use tauri::State;
 
-use crate::db::queries::{self, DailySummary, HeatmapPoint, KeyFrequency, WeeklyReport};
+use crate::db::queries::{self, AppUsage, DailySummary, HeatmapPoint, KeyFrequency, TimeThief, WeeklyReport};
+use crate::pet::{self, PetState};
 use crate::platform;
 use crate::state::{AppState, STATUS_ERROR, STATUS_PAUSED, STATUS_RUNNING};
 
@@ -141,4 +142,77 @@ pub fn save_png(data: Vec<u8>, filename: String) -> Result<String, String> {
     let path = downloads.join(&filename);
     std::fs::write(&path, &data).map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().to_string())
+}
+
+// ===== App Tracking =====
+
+#[tauri::command]
+pub fn get_app_usage(
+    state: State<AppState>,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<AppUsage>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_app_usage(&conn, start_ms, end_ms).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_category_breakdown(
+    state: State<AppState>,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<(String, i64)>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_category_breakdown(&conn, start_ms, end_ms).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_time_thief(
+    state: State<AppState>,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Option<TimeThief>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_time_thief(&conn, start_ms, end_ms).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_app_category(
+    state: State<AppState>,
+    app_name: String,
+    category: String,
+) -> Result<(), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::set_app_category(&conn, &app_name, &category).map_err(|e| e.to_string())
+}
+
+// ===== Pet System =====
+
+#[tauri::command]
+pub fn get_pet(state: State<AppState>) -> PetState {
+    pet::load_pet(&state.db)
+}
+
+#[tauri::command]
+pub fn feed_pet(state: State<AppState>, focus_mins: i32) -> Result<PetState, String> {
+    let mut p = pet::load_pet(&state.db);
+    p.feed(focus_mins);
+    pet::save_pet(&state.db, &p)?;
+    Ok(p)
+}
+
+#[tauri::command]
+pub fn damage_pet(state: State<AppState>, amount: i32) -> Result<PetState, String> {
+    let mut p = pet::load_pet(&state.db);
+    p.take_damage(amount);
+    pet::save_pet(&state.db, &p)?;
+    Ok(p)
+}
+
+#[tauri::command]
+pub fn rename_pet(state: State<AppState>, name: String) -> Result<PetState, String> {
+    let mut p = pet::load_pet(&state.db);
+    p.name = name;
+    pet::save_pet(&state.db, &p)?;
+    Ok(p)
 }

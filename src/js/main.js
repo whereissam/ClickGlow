@@ -45,10 +45,18 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(`${btn.dataset.tab}-panel`).classList.add('active');
 
+    // Stop pet polling when leaving Pet tab
+    if (btn.dataset.tab !== 'pet' && petPollTimer) {
+      clearInterval(petPollTimer);
+      petPollTimer = null;
+    }
+
     if (btn.dataset.tab === 'keyboard') loadKeyboardChart();
     if (btn.dataset.tab === 'heatmap') loadHeatmap();
     if (btn.dataset.tab === 'dashboard') loadDashboard();
     if (btn.dataset.tab === 'weekly') loadWeeklyPanel();
+    if (btn.dataset.tab === 'apps') loadAppsPanel();
+    if (btn.dataset.tab === 'pet') loadPetPanel();
     if (btn.dataset.tab === 'settings') loadSettings();
   });
 });
@@ -604,6 +612,217 @@ function renderWeeklyKeysChart(topKeys) {
   });
 }
 
+// --- Apps Panel ---
+let categoryChart = null;
+let appUsageChart = null;
+
+async function loadAppsPanel() {
+  const { start, end } = getTimeRange(document.getElementById('timeRange').value);
+
+  // Category pie chart
+  try {
+    const breakdown = await invoke('get_category_breakdown', { startMs: start, endMs: end });
+    renderCategoryChart(breakdown);
+  } catch (e) {
+    console.error('Failed to load category breakdown:', e);
+  }
+
+  // App usage bar chart
+  try {
+    const usage = await invoke('get_app_usage', { startMs: start, endMs: end });
+    renderAppUsageChart(usage);
+  } catch (e) {
+    console.error('Failed to load app usage:', e);
+  }
+
+  // Time thief
+  try {
+    const thief = await invoke('get_time_thief', { startMs: start, endMs: end });
+    const section = document.getElementById('timeThiefSection');
+    if (thief) {
+      section.style.display = 'flex';
+      document.getElementById('thiefName').textContent = thief.app_name;
+      document.getElementById('thiefIcon').textContent = thief.app_name.charAt(0);
+      document.getElementById('thiefHours').textContent = thief.hours_stolen.toFixed(1);
+      document.getElementById('thiefSwitches').textContent = thief.switch_count;
+      const mins = Math.round(thief.longest_session_ms / 60000);
+      document.getElementById('thiefLongest').textContent = mins >= 60 ? `${(mins/60).toFixed(1)}h` : `${mins}m`;
+    } else {
+      section.style.display = 'none';
+    }
+  } catch (e) {
+    console.error('Failed to load time thief:', e);
+  }
+}
+
+function renderCategoryChart(breakdown) {
+  const el = document.getElementById('categoryChart');
+  if (!el) return;
+  if (!categoryChart) categoryChart = echarts.init(el, null, { renderer: 'canvas' });
+
+  const colorMap = { productive: '#7ED957', neutral: '#5B8CFF', distraction: '#FF5252' };
+  const data = breakdown.map(([cat, ms]) => ({
+    name: cat.charAt(0).toUpperCase() + cat.slice(1),
+    value: Math.round(ms / 60000), // minutes
+    itemStyle: { color: colorMap[cat] || '#8B8D94' },
+  }));
+
+  categoryChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'item', formatter: '{b}: {c} min ({d}%)', backgroundColor: '#2A2D34', borderColor: '#33363F', textStyle: { color: '#E8E6E3' } },
+    series: [{
+      type: 'pie', radius: ['45%', '70%'], center: ['50%', '55%'],
+      data, label: { color: '#8B8D94', fontSize: 12 },
+      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } },
+    }],
+    animationDuration: 600,
+  });
+}
+
+function renderAppUsageChart(usage) {
+  const el = document.getElementById('appUsageChart');
+  if (!el) return;
+  if (!appUsageChart) appUsageChart = echarts.init(el, null, { renderer: 'canvas' });
+
+  const top10 = usage.slice(0, 10);
+  const names = top10.map(a => a.app_name).reverse();
+  const mins = top10.map(a => Math.round(a.total_duration_ms / 60000)).reverse();
+  const colorMap = { productive: '#7ED957', neutral: '#5B8CFF', distraction: '#FF5252' };
+  const colors = top10.map(a => colorMap[a.category] || '#8B8D94').reverse();
+
+  appUsageChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: '#2A2D34', borderColor: '#33363F', textStyle: { color: '#E8E6E3', fontSize: 12 } },
+    grid: { left: 100, right: 16, top: 8, bottom: 8 },
+    xAxis: { type: 'value', axisLabel: { color: '#5C5E66', fontSize: 10, formatter: '{value}m' }, splitLine: { lineStyle: { color: '#2A2D34' } }, axisLine: { show: false } },
+    yAxis: { type: 'category', data: names, axisLabel: { color: '#8B8D94', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false } },
+    series: [{
+      type: 'bar', data: mins.map((v, i) => ({ value: v, itemStyle: { color: colors[i] } })),
+      barWidth: 14, itemStyle: { borderRadius: [0, 4, 4, 0] },
+    }],
+    animationDuration: 400,
+  });
+}
+
+// Export poster
+document.getElementById('exportPosterBtn').addEventListener('click', async () => {
+  const poster = document.querySelector('.wanted-poster');
+  // Use html2canvas-like approach: render to canvas
+  // For now, we'll capture using the existing ECharts approach or alert
+  alert('Poster export coming soon! Take a screenshot for now.');
+});
+
+// --- Focus Pet ---
+let pomodoroTimer = null;
+let pomodoroDurationMins = 25;
+let pomodoroSecondsLeft = 25 * 60;
+let pomodoroRunning = false;
+let petPollTimer = null;
+
+async function loadPetPanel() {
+  try {
+    const pet = await invoke('get_pet');
+    updatePetUI(pet);
+  } catch (e) {
+    console.error('Failed to load pet:', e);
+  }
+  // Poll pet state every 5s while on Pet tab
+  if (petPollTimer) clearInterval(petPollTimer);
+  petPollTimer = setInterval(async () => {
+    try {
+      const pet = await invoke('get_pet');
+      updatePetUI(pet);
+    } catch (_) {}
+  }, 5000);
+}
+
+function updatePetUI(pet) {
+  const creature = document.getElementById('petCreature');
+  creature.setAttribute('data-species', pet.species);
+  creature.setAttribute('data-mood', pet.mood);
+
+  document.getElementById('petNameTag').textContent = pet.name;
+  document.getElementById('petLevel').textContent = pet.level;
+  document.getElementById('petSpecies').textContent = pet.species;
+  document.getElementById('petStreak').textContent = pet.focus_streak;
+
+  // HP bar
+  const hpPct = Math.max(0, Math.min(100, (pet.hp / pet.max_hp) * 100));
+  document.getElementById('petHpFill').style.width = hpPct + '%';
+  document.getElementById('petHpText').textContent = `${pet.hp}/${pet.max_hp}`;
+
+  // XP bar
+  const xpNeeded = pet.level === 1 ? 100 : pet.level === 2 ? 300 : 999;
+  const xpPct = Math.max(0, Math.min(100, (pet.xp / xpNeeded) * 100));
+  document.getElementById('petXpFill').style.width = xpPct + '%';
+  document.getElementById('petXpText').textContent = `${pet.xp}/${xpNeeded}`;
+}
+
+// Click pet to interact
+document.getElementById('petCreature').addEventListener('click', () => {
+  const creature = document.getElementById('petCreature');
+  creature.style.animation = 'none';
+  creature.offsetHeight; // trigger reflow
+  creature.style.animation = 'petBounce 0.4s ease';
+});
+
+// Pomodoro timer
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// Update display when duration changes
+document.getElementById('pomodoroDuration').addEventListener('change', (e) => {
+  if (pomodoroRunning) return; // don't change while running
+  pomodoroDurationMins = parseInt(e.target.value);
+  pomodoroSecondsLeft = pomodoroDurationMins * 60;
+  document.getElementById('pomodoroDisplay').textContent = formatTime(pomodoroSecondsLeft);
+});
+
+document.getElementById('pomodoroStartBtn').addEventListener('click', () => {
+  if (pomodoroRunning) return;
+  pomodoroRunning = true;
+  pomodoroDurationMins = parseInt(document.getElementById('pomodoroDuration').value);
+  pomodoroSecondsLeft = pomodoroDurationMins * 60;
+  document.getElementById('pomodoroStartBtn').style.display = 'none';
+  document.getElementById('pomodoroStopBtn').style.display = 'inline-block';
+  document.getElementById('pomodoroDuration').disabled = true;
+
+  pomodoroTimer = setInterval(async () => {
+    pomodoroSecondsLeft--;
+    document.getElementById('pomodoroDisplay').textContent = formatTime(pomodoroSecondsLeft);
+
+    if (pomodoroSecondsLeft <= 0) {
+      clearInterval(pomodoroTimer);
+      pomodoroRunning = false;
+      document.getElementById('pomodoroStartBtn').style.display = 'inline-block';
+      document.getElementById('pomodoroStopBtn').style.display = 'none';
+      document.getElementById('pomodoroDuration').disabled = false;
+      document.getElementById('pomodoroDisplay').textContent = formatTime(pomodoroDurationMins * 60);
+
+      // Feed the pet!
+      try {
+        const pet = await invoke('feed_pet', { focusMins: pomodoroDurationMins });
+        updatePetUI(pet);
+      } catch (e) {
+        console.error('Failed to feed pet:', e);
+      }
+    }
+  }, 1000);
+});
+
+document.getElementById('pomodoroStopBtn').addEventListener('click', () => {
+  clearInterval(pomodoroTimer);
+  pomodoroRunning = false;
+  pomodoroSecondsLeft = pomodoroDurationMins * 60;
+  document.getElementById('pomodoroDisplay').textContent = formatTime(pomodoroSecondsLeft);
+  document.getElementById('pomodoroStartBtn').style.display = 'inline-block';
+  document.getElementById('pomodoroStopBtn').style.display = 'none';
+  document.getElementById('pomodoroDuration').disabled = false;
+});
+
 // --- Settings ---
 async function loadSettings() {
   try {
@@ -707,4 +926,6 @@ window.addEventListener('resize', () => {
   if (hourlyChart) hourlyChart.resize();
   if (weeklyHourlyChart) weeklyHourlyChart.resize();
   if (weeklyKeysChart) weeklyKeysChart.resize();
+  if (categoryChart) categoryChart.resize();
+  if (appUsageChart) appUsageChart.resize();
 });
