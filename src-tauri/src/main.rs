@@ -17,6 +17,7 @@ fn main() {
     let paused = Arc::new(AtomicBool::new(false));
 
     // Start input listener -> buffer -> DB pipeline
+    // Dropping `tx` on shutdown will cause the buffer thread to flush and exit
     let (tx, rx) = std::sync::mpsc::channel();
     listener::start_listener(tx, paused.clone());
     buffer::start_buffer(rx, db.clone());
@@ -39,7 +40,15 @@ fn main() {
         .setup(move |app| {
             menu::setup_tray(app.handle(), paused.clone())
                 .expect("Failed to setup tray");
+            log::info!("ClickGlow started");
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // Hide window on close instead of quitting (tray app behavior)
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let _ = window.hide();
+                api.prevent_close();
+            }
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

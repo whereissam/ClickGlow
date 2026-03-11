@@ -223,7 +223,7 @@ main {
 /* Stats */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
   margin-bottom: 28px;
 }
@@ -232,8 +232,9 @@ main {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 16px;
   transition: all 0.3s ease;
+  max-height: 120px;
 }
 
 .stat-card:hover {
@@ -247,46 +248,50 @@ main {
 }
 
 .stat-icon {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   opacity: 0.8;
+}
+
+.stat-icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .stat-value {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
   font-weight: 500;
 }
 
-/* Preview Section */
-.preview-section {
+/* Chart Section */
+.chart-section {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-.preview-section h3 {
+.chart-section h3 {
   font-size: 15px;
   color: var(--text-dim);
   margin-bottom: 12px;
   font-weight: 500;
 }
 
-.mini-heatmap-container {
+#hourly-chart {
   flex: 1;
-  min-height: 200px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  min-height: 220px;
   border-radius: var(--radius);
   overflow: hidden;
 }

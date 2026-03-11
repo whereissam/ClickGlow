@@ -1,6 +1,6 @@
 use rdev::{Event, EventType, Key, Button};
 use std::sync::mpsc::Sender;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
@@ -54,14 +54,24 @@ fn button_to_enum(button: Button) -> MouseButton {
     }
 }
 
+/// Get primary screen dimensions using Core Graphics on macOS
+#[cfg(target_os = "macos")]
 fn screen_dimensions() -> (u32, u32) {
-    // TODO: Phase 3 — use platform-specific API for actual screen size
+    use core_graphics::display::CGDisplay;
+    let display = CGDisplay::main();
+    let w = display.pixels_wide() as u32;
+    let h = display.pixels_high() as u32;
+    if w > 0 && h > 0 { (w, h) } else { (1920, 1080) }
+}
+
+#[cfg(not(target_os = "macos"))]
+fn screen_dimensions() -> (u32, u32) {
     (1920, 1080)
 }
 
 /// Track last known mouse position for click events
-static LAST_MOUSE_X: std::sync::atomic::AtomicI64 = std::sync::atomic::AtomicI64::new(0);
-static LAST_MOUSE_Y: std::sync::atomic::AtomicI64 = std::sync::atomic::AtomicI64::new(0);
+static LAST_MOUSE_X: AtomicI64 = AtomicI64::new(0);
+static LAST_MOUSE_Y: AtomicI64 = AtomicI64::new(0);
 
 pub fn start_listener(
     tx: Sender<InputEvent>,
@@ -70,6 +80,11 @@ pub fn start_listener(
     std::thread::spawn(move || {
         let mut last_move = Instant::now();
         let move_throttle = std::time::Duration::from_millis(50);
+
+        // Cache screen dimensions, refresh every 60s
+        let mut cached_dims = screen_dimensions();
+        let mut last_dims_check = Instant::now();
+        let dims_refresh = std::time::Duration::from_secs(60);
 
         // IMPORTANT: Do NOT access event.name in the callback.
         // On macOS, rdev's event.name calls TSMGetInputSourceProperty which
@@ -80,12 +95,17 @@ pub fn start_listener(
                 return;
             }
 
+            // Refresh screen dimensions periodically
+            if last_dims_check.elapsed() >= dims_refresh {
+                cached_dims = screen_dimensions();
+                last_dims_check = Instant::now();
+            }
+
             let ts = now_ms();
-            let (sw, sh) = screen_dimensions();
+            let (sw, sh) = cached_dims;
 
             let input_event = match event.event_type {
                 EventType::MouseMove { x, y } => {
-                    // Store latest position for click events
                     LAST_MOUSE_X.store(x.to_bits() as i64, Ordering::Relaxed);
                     LAST_MOUSE_Y.store(y.to_bits() as i64, Ordering::Relaxed);
 
@@ -124,6 +144,8 @@ pub fn start_listener(
                 let _ = tx.send(evt);
             }
         };
+
+        log::info!("Input listener started (screen: {:?})", cached_dims);
 
         if let Err(e) = rdev::listen(callback) {
             log::error!("Input listener error: {:?}", e);

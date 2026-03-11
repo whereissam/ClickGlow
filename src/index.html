@@ -96,17 +96,24 @@
           </div>
           <div class="stat-card">
             <div class="stat-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF6B35" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="stat-value" id="peakHour">-</div>
+            <div class="stat-label">Peak Hour</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#B388FF" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
             </div>
             <div class="stat-value" id="topKey">-</div>
             <div class="stat-label">Top Key</div>
           </div>
         </div>
 
-        <!-- Mini heatmap preview -->
-        <div class="preview-section">
-          <h3>Activity Preview</h3>
-          <div class="mini-heatmap-container" id="mini-heatmap-container"></div>
+        <!-- Hourly activity chart -->
+        <div class="chart-section">
+          <h3>Hourly Activity</h3>
+          <div id="hourly-chart"></div>
         </div>
       </div>
 

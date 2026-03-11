@@ -17,11 +17,21 @@ pub struct KeyFrequency {
 }
 
 #[derive(Debug, Serialize)]
+pub struct HourlyActivity {
+    pub hour: u32,
+    pub clicks: u64,
+    pub moves: u64,
+    pub keystrokes: u64,
+}
+
+#[derive(Debug, Serialize)]
 pub struct DailySummary {
     pub total_clicks: u64,
     pub total_moves: u64,
     pub total_keystrokes: u64,
     pub top_key: Option<String>,
+    pub peak_hour: Option<u32>,
+    pub hourly: Vec<HourlyActivity>,
 }
 
 pub fn batch_insert(conn: &Connection, events: &[InputEvent]) -> Result<(), rusqlite::Error> {
@@ -60,7 +70,6 @@ pub fn get_mouse_heatmap(
     end_ms: i64,
     event_type: Option<i32>,
 ) -> Result<Vec<HeatmapPoint>, rusqlite::Error> {
-    // Bucket into 10x10 pixel grid cells and count
     let sql = match event_type {
         Some(_) => {
             "SELECT CAST(x/10 AS INTEGER)*10 as bx, CAST(y/10 AS INTEGER)*10 as by, COUNT(*) as cnt
@@ -153,10 +162,72 @@ pub fn get_daily_summary(
         |row| row.get(0),
     ).ok();
 
+    // Hourly activity breakdown
+    // (created_at / 3600000) gives hour-of-epoch, % 24 gives hour-of-day in UTC
+    // We use local time by adjusting in frontend instead
+    let mut hourly_stmt = conn.prepare(
+        "SELECT
+            CAST((created_at / 3600000) % 24 AS INTEGER) as hr,
+            SUM(CASE WHEN event_type > 0 THEN 1 ELSE 0 END) as clicks,
+            SUM(CASE WHEN event_type = 0 THEN 1 ELSE 0 END) as moves
+         FROM mouse_events
+         WHERE created_at >= ?1 AND created_at <= ?2
+         GROUP BY hr
+         ORDER BY hr"
+    )?;
+
+    let mut key_hourly_stmt = conn.prepare(
+        "SELECT
+            CAST((created_at / 3600000) % 24 AS INTEGER) as hr,
+            COUNT(*) as cnt
+         FROM key_events
+         WHERE created_at >= ?1 AND created_at <= ?2
+         GROUP BY hr
+         ORDER BY hr"
+    )?;
+
+    // Build hourly map
+    let mut hourly_map: std::collections::HashMap<u32, HourlyActivity> = std::collections::HashMap::new();
+
+    let mouse_rows = hourly_stmt.query_map(rusqlite::params![start_ms, end_ms], |row| {
+        Ok((row.get::<_, u32>(0)?, row.get::<_, u64>(1)?, row.get::<_, u64>(2)?))
+    })?;
+
+    for row in mouse_rows {
+        let (hr, clicks, moves) = row?;
+        let entry = hourly_map.entry(hr).or_insert(HourlyActivity {
+            hour: hr, clicks: 0, moves: 0, keystrokes: 0,
+        });
+        entry.clicks = clicks;
+        entry.moves = moves;
+    }
+
+    let key_rows = key_hourly_stmt.query_map(rusqlite::params![start_ms, end_ms], |row| {
+        Ok((row.get::<_, u32>(0)?, row.get::<_, u64>(1)?))
+    })?;
+
+    for row in key_rows {
+        let (hr, cnt) = row?;
+        let entry = hourly_map.entry(hr).or_insert(HourlyActivity {
+            hour: hr, clicks: 0, moves: 0, keystrokes: 0,
+        });
+        entry.keystrokes = cnt;
+    }
+
+    let mut hourly: Vec<HourlyActivity> = hourly_map.into_values().collect();
+    hourly.sort_by_key(|h| h.hour);
+
+    // Peak hour = hour with most total activity
+    let peak_hour = hourly.iter()
+        .max_by_key(|h| h.clicks + h.moves + h.keystrokes)
+        .map(|h| h.hour);
+
     Ok(DailySummary {
         total_clicks,
         total_moves,
         total_keystrokes,
         top_key,
+        peak_hour,
+        hourly,
     })
 }

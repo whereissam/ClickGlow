@@ -30,6 +30,13 @@ function formatNumber(n) {
   return n.toLocaleString();
 }
 
+function formatHour(h) {
+  if (h === 0) return '12 AM';
+  if (h < 12) return h + ' AM';
+  if (h === 12) return '12 PM';
+  return (h - 12) + ' PM';
+}
+
 // --- Tab switching ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -45,7 +52,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // --- Heatmap filter ---
-let currentFilter = null; // null = all, 1 = clicks only (event_type > 0), 0 = moves
+let currentFilter = null;
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -60,7 +67,6 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 
 // --- Heatmap ---
 let heatmapInstance = null;
-let miniHeatmapInstance = null;
 
 async function loadHeatmap() {
   const container = document.getElementById('heatmap-container');
@@ -104,51 +110,6 @@ async function loadHeatmap() {
     heatmapInstance.setData({ max: maxVal, data: scaledData });
   } catch (e) {
     console.error('Failed to load heatmap:', e);
-  }
-}
-
-async function loadMiniHeatmap() {
-  const container = document.getElementById('mini-heatmap-container');
-  if (!container || container.offsetHeight === 0) return;
-
-  const { start, end } = getTimeRange(document.getElementById('timeRange').value);
-
-  if (!miniHeatmapInstance) {
-    miniHeatmapInstance = h337.create({
-      container,
-      radius: 15,
-      maxOpacity: 0.6,
-      minOpacity: 0.02,
-      blur: 0.85,
-      gradient: {
-        0.1: '#1a1a4e',
-        0.25: '#5B8CFF',
-        0.45: '#7ED957',
-        0.65: '#F7B801',
-        0.85: '#FF6B35',
-        1.0: '#ff3333',
-      },
-    });
-  }
-
-  try {
-    const data = await invoke('get_mouse_heatmap', {
-      startMs: start,
-      endMs: end,
-      eventType: null,
-    });
-
-    const rect = container.getBoundingClientRect();
-    const maxVal = data.reduce((m, d) => Math.max(m, d.value), 1);
-    const scaledData = data.map(d => ({
-      x: Math.round((d.x / 1920) * rect.width),
-      y: Math.round((d.y / 1080) * rect.height),
-      value: d.value,
-    }));
-
-    miniHeatmapInstance.setData({ max: maxVal, data: scaledData });
-  } catch (e) {
-    console.error('Failed to load mini heatmap:', e);
   }
 }
 
@@ -228,7 +189,80 @@ async function loadKeyboardChart() {
   }
 }
 
-// --- Stats ---
+// --- Hourly activity chart ---
+let hourlyChart = null;
+
+function renderHourlyChart(hourly) {
+  const container = document.getElementById('hourly-chart');
+  if (!container || container.offsetHeight === 0) return;
+
+  if (!hourlyChart) {
+    hourlyChart = echarts.init(container, null, { renderer: 'canvas' });
+  }
+
+  // Build full 24-hour arrays
+  const hours = Array.from({ length: 24 }, (_, i) => formatHour(i));
+  const clicks = new Array(24).fill(0);
+  const keystrokes = new Array(24).fill(0);
+
+  // Adjust UTC hour from DB to local timezone
+  const tzOffset = new Date().getTimezoneOffset() / -60;
+  for (const h of hourly) {
+    const localHour = ((h.hour + tzOffset) % 24 + 24) % 24;
+    clicks[localHour] = Number(h.clicks);
+    keystrokes[localHour] = Number(h.keystrokes);
+  }
+
+  hourlyChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: '#2A2D34',
+      borderColor: '#33363F',
+      textStyle: { color: '#E8E6E3', fontSize: 12 },
+    },
+    legend: {
+      data: ['Clicks', 'Keystrokes'],
+      top: 4,
+      right: 16,
+      textStyle: { color: '#8B8D94', fontSize: 11 },
+    },
+    grid: { left: 48, right: 16, top: 36, bottom: 28 },
+    xAxis: {
+      type: 'category',
+      data: hours,
+      axisLabel: { color: '#5C5E66', fontSize: 10, interval: 2 },
+      axisLine: { lineStyle: { color: '#33363F' } },
+      axisTick: { show: false },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: '#5C5E66', fontSize: 10 },
+      splitLine: { lineStyle: { color: '#2A2D34' } },
+      axisLine: { show: false },
+    },
+    series: [
+      {
+        name: 'Clicks',
+        type: 'bar',
+        data: clicks,
+        barWidth: 8,
+        itemStyle: { color: '#F7B801', borderRadius: [3, 3, 0, 0] },
+      },
+      {
+        name: 'Keystrokes',
+        type: 'bar',
+        data: keystrokes,
+        barWidth: 8,
+        itemStyle: { color: '#5B8CFF', borderRadius: [3, 3, 0, 0] },
+      },
+    ],
+    animationDuration: 600,
+    animationEasing: 'cubicOut',
+  });
+}
+
+// --- Stats + Dashboard ---
 async function loadStats() {
   const { start, end } = getTimeRange(document.getElementById('timeRange').value);
 
@@ -238,18 +272,46 @@ async function loadStats() {
     document.getElementById('totalMoves').textContent = formatNumber(s.total_moves);
     document.getElementById('totalKeystrokes').textContent = formatNumber(s.total_keystrokes);
     document.getElementById('topKey').textContent = s.top_key || '-';
+
+    // Peak hour (adjust from UTC to local)
+    if (s.peak_hour !== null && s.peak_hour !== undefined) {
+      const tzOffset = new Date().getTimezoneOffset() / -60;
+      const localPeak = ((s.peak_hour + tzOffset) % 24 + 24) % 24;
+      document.getElementById('peakHour').textContent = formatHour(localPeak);
+    } else {
+      document.getElementById('peakHour').textContent = '-';
+    }
+
+    // Render hourly chart
+    setTimeout(() => renderHourlyChart(s.hourly || []), 50);
   } catch (e) {
     console.error('Failed to load stats:', e);
   }
 }
 
-// --- Dashboard (stats + mini heatmap) ---
 async function loadDashboard() {
   await loadStats();
-  setTimeout(loadMiniHeatmap, 100); // slight delay for container to render
 }
 
-// --- Recording status ---
+// --- Recording status (clickable toggle) ---
+const recIndicator = document.getElementById('recordingIndicator');
+recIndicator.style.cursor = 'pointer';
+recIndicator.addEventListener('click', async () => {
+  try {
+    const isRecording = await invoke('toggle_recording');
+    const text = recIndicator.querySelector('.rec-text');
+    if (isRecording) {
+      recIndicator.classList.remove('paused');
+      text.textContent = 'Recording';
+    } else {
+      recIndicator.classList.add('paused');
+      text.textContent = 'Paused';
+    }
+  } catch (e) {
+    console.error('Failed to toggle recording:', e);
+  }
+});
+
 async function updateStatus() {
   try {
     const recording = await invoke('get_recording_status');
@@ -291,4 +353,5 @@ window.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('resize', () => {
   if (keyboardChart) keyboardChart.resize();
+  if (hourlyChart) hourlyChart.resize();
 });
