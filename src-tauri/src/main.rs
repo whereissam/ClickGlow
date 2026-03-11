@@ -62,6 +62,11 @@ fn main() {
             commands::get_category_breakdown,
             commands::get_time_thief,
             commands::set_app_category,
+            commands::get_app_categories,
+            commands::get_keyword_rules,
+            commands::set_keyword_rule,
+            commands::delete_keyword_rule,
+            commands::get_activity_log,
             commands::get_pet,
             commands::is_distracted,
             commands::feed_pet,
@@ -69,7 +74,7 @@ fn main() {
             commands::rename_pet,
         ])
         .setup(move |app| {
-            menu::setup_tray(app.handle(), paused.clone(), listener_status.clone())
+            menu::setup_tray(app.handle(), paused.clone(), listener_status.clone(), db.clone(), distracted.clone())
                 .expect("Failed to setup tray");
             log::info!("ClickGlow started");
             Ok(())

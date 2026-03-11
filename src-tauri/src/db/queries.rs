@@ -573,6 +573,81 @@ pub fn get_app_categories(conn: &Connection) -> Result<Vec<(String, String)>, ru
     rows.collect()
 }
 
+/// Get recent activity log entries
+#[derive(Debug, Serialize, Clone)]
+pub struct ActivityEntry {
+    pub app_name: String,
+    pub window_title: String,
+    pub category: String,
+    pub duration_ms: i64,
+    pub created_at: i64,
+}
+
+pub fn get_activity_log(
+    conn: &Connection,
+    start_ms: i64,
+    end_ms: i64,
+    limit: u32,
+) -> Result<Vec<ActivityEntry>, rusqlite::Error> {
+    let mut stmt = conn.prepare(
+        "SELECT app_name, window_title, category, duration_ms, created_at
+         FROM app_events
+         WHERE created_at >= ?1 AND created_at <= ?2
+         ORDER BY created_at DESC
+         LIMIT ?3"
+    )?;
+
+    let rows = stmt.query_map(rusqlite::params![start_ms, end_ms, limit], |row| {
+        Ok(ActivityEntry {
+            app_name: row.get(0)?,
+            window_title: row.get(1)?,
+            category: row.get(2)?,
+            duration_ms: row.get(3)?,
+            created_at: row.get(4)?,
+        })
+    })?;
+
+    rows.collect()
+}
+
+// ===== Keyword Rules =====
+
+#[derive(Debug, Serialize, Clone)]
+pub struct KeywordRule {
+    pub id: i64,
+    pub keyword: String,
+    pub category: String,
+}
+
+pub fn get_keyword_rules(conn: &Connection) -> Result<Vec<KeywordRule>, rusqlite::Error> {
+    let mut stmt = conn.prepare("SELECT id, keyword, category FROM keyword_rules ORDER BY keyword")?;
+    let rows = stmt.query_map([], |row| {
+        Ok(KeywordRule {
+            id: row.get(0)?,
+            keyword: row.get(1)?,
+            category: row.get(2)?,
+        })
+    })?;
+    rows.collect()
+}
+
+pub fn set_keyword_rule(conn: &Connection, keyword: &str, category: &str) -> Result<(), rusqlite::Error> {
+    conn.execute(
+        "INSERT INTO keyword_rules (keyword, category) VALUES (?1, ?2)
+         ON CONFLICT(keyword) DO UPDATE SET category = ?2",
+        rusqlite::params![keyword.to_lowercase(), category],
+    )?;
+    Ok(())
+}
+
+pub fn delete_keyword_rule(conn: &Connection, keyword: &str) -> Result<(), rusqlite::Error> {
+    conn.execute(
+        "DELETE FROM keyword_rules WHERE keyword = ?1",
+        rusqlite::params![keyword],
+    )?;
+    Ok(())
+}
+
 /// Get distraction time in the last N minutes (for pet damage calculation)
 pub fn get_recent_distraction_ms(conn: &Connection, since_ms: i64) -> Result<i64, rusqlite::Error> {
     conn.query_row(

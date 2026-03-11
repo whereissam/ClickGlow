@@ -140,7 +140,7 @@ fn record_app_event(
 }
 
 fn get_category(conn: &rusqlite::Connection, app_name: &str, window_title: &str) -> String {
-    // Check user-defined category first
+    // 1. Check user-defined app category first (exact app name match)
     if let Ok(cat) = conn.query_row(
         "SELECT category FROM app_categories WHERE app_name = ?1",
         rusqlite::params![app_name],
@@ -149,16 +149,18 @@ fn get_category(conn: &rusqlite::Connection, app_name: &str, window_title: &str)
         return cat;
     }
 
-    // Check window title for distraction keywords
+    // 2. Check keyword rules from DB (user-configurable, matches window title)
     let title_lower = window_title.to_lowercase();
-    let distraction_keywords = [
-        "youtube", "twitter", "reddit", "instagram", "tiktok",
-        "facebook", "netflix", "twitch", "x.com",
-    ];
-
-    for kw in &distraction_keywords {
-        if title_lower.contains(kw) {
-            return "distraction".to_string();
+    if let Ok(mut stmt) = conn.prepare("SELECT keyword, category FROM keyword_rules") {
+        if let Ok(rows) = stmt.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        }) {
+            for row in rows.flatten() {
+                let (keyword, category) = row;
+                if title_lower.contains(&keyword) {
+                    return category;
+                }
+            }
         }
     }
 

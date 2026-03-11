@@ -57,6 +57,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     if (btn.dataset.tab === 'weekly') loadWeeklyPanel();
     if (btn.dataset.tab === 'apps') loadAppsPanel();
     if (btn.dataset.tab === 'pet') loadPetPanel();
+    if (btn.dataset.tab === 'log') loadActivityLog();
     if (btn.dataset.tab === 'settings') loadSettings();
   });
 });
@@ -710,6 +711,113 @@ document.getElementById('exportPosterBtn').addEventListener('click', async () =>
   // Use html2canvas-like approach: render to canvas
   // For now, we'll capture using the existing ECharts approach or alert
   alert('Poster export coming soon! Take a screenshot for now.');
+});
+
+// --- Activity Log ---
+async function loadActivityLog() {
+  loadCategoryRules();
+  const range = document.getElementById('logRange').value;
+  const { start, end } = getTimeRange(range);
+  try {
+    const entries = await invoke('get_activity_log', { startMs: start, endMs: end, limit: 200 });
+    const container = document.getElementById('logEntries');
+    if (entries.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-secondary)">No activity recorded yet. Use your apps and check back!</div>';
+      return;
+    }
+    container.innerHTML = entries.map(e => {
+      const time = new Date(e.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dur = e.duration_ms >= 60000
+        ? Math.round(e.duration_ms / 60000) + 'm'
+        : Math.round(e.duration_ms / 1000) + 's';
+      const title = e.window_title || '—';
+      return `<div class="log-entry">
+        <span class="log-col-time">${time}</span>
+        <span class="log-col-app">${e.app_name}</span>
+        <span class="log-col-title" title="${title.replace(/"/g, '&quot;')}">${title}</span>
+        <span class="log-col-cat"><span class="log-cat ${e.category}">${e.category}</span></span>
+        <span class="log-col-dur">${dur}</span>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.error('Failed to load activity log:', e);
+  }
+}
+
+document.getElementById('logRange').addEventListener('change', loadActivityLog);
+
+async function loadCategoryRules() {
+  try {
+    // Load app rules
+    const appCats = await invoke('get_app_categories');
+    const appList = document.getElementById('appRulesList');
+    appList.innerHTML = appCats.map(([name, cat]) => `
+      <div class="rule-row">
+        <span class="rule-name">${name}</span>
+        <select onchange="updateAppCategory('${name.replace(/'/g, "\\'")}', this.value)">
+          <option value="productive" ${cat === 'productive' ? 'selected' : ''}>Productive</option>
+          <option value="neutral" ${cat === 'neutral' ? 'selected' : ''}>Neutral</option>
+          <option value="distraction" ${cat === 'distraction' ? 'selected' : ''}>Distraction</option>
+        </select>
+      </div>
+    `).join('');
+
+    // Load keyword rules
+    const kwRules = await invoke('get_keyword_rules');
+    const kwList = document.getElementById('keywordRulesList');
+    kwList.innerHTML = kwRules.map(r => `
+      <div class="rule-row">
+        <span class="rule-name">${r.keyword}</span>
+        <select onchange="updateKeywordRule('${r.keyword.replace(/'/g, "\\'")}', this.value)">
+          <option value="productive" ${r.category === 'productive' ? 'selected' : ''}>Productive</option>
+          <option value="neutral" ${r.category === 'neutral' ? 'selected' : ''}>Neutral</option>
+          <option value="distraction" ${r.category === 'distraction' ? 'selected' : ''}>Distraction</option>
+        </select>
+        <button class="rule-delete" onclick="removeKeywordRule('${r.keyword.replace(/'/g, "\\'")}')">x</button>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error('Failed to load rules:', e);
+  }
+}
+
+async function updateAppCategory(appName, category) {
+  try {
+    await invoke('set_app_category', { appName, category });
+  } catch (e) {
+    console.error('Failed to update app category:', e);
+  }
+}
+
+async function updateKeywordRule(keyword, category) {
+  try {
+    await invoke('set_keyword_rule', { keyword, category });
+  } catch (e) {
+    console.error('Failed to update keyword rule:', e);
+  }
+}
+
+async function removeKeywordRule(keyword) {
+  try {
+    await invoke('delete_keyword_rule', { keyword });
+    loadCategoryRules();
+  } catch (e) {
+    console.error('Failed to delete keyword rule:', e);
+  }
+}
+
+document.getElementById('addKeywordBtn').addEventListener('click', async () => {
+  const input = document.getElementById('newKeyword');
+  const keyword = input.value.trim().toLowerCase();
+  if (!keyword) return;
+  const category = document.getElementById('newKeywordCat').value;
+  try {
+    await invoke('set_keyword_rule', { keyword, category });
+    input.value = '';
+    loadCategoryRules();
+  } catch (e) {
+    console.error('Failed to add keyword rule:', e);
+  }
 });
 
 // --- Focus Pet ---

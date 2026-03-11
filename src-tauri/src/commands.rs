@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 use tauri::State;
 
-use crate::db::queries::{self, AppUsage, DailySummary, HeatmapPoint, KeyFrequency, TimeThief, WeeklyReport};
+use crate::db::queries::{self, ActivityEntry, AppUsage, DailySummary, HeatmapPoint, KeyFrequency, KeywordRule, TimeThief, WeeklyReport};
 use crate::pet::{self, PetState};
 use crate::platform;
 use crate::state::{AppState, STATUS_ERROR, STATUS_PAUSED, STATUS_RUNNING};
@@ -184,6 +184,41 @@ pub fn set_app_category(
 ) -> Result<(), String> {
     let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
     queries::set_app_category(&conn, &app_name, &category).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_app_categories(state: State<AppState>) -> Result<Vec<(String, String)>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_app_categories(&conn).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_keyword_rules(state: State<AppState>) -> Result<Vec<KeywordRule>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_keyword_rules(&conn).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_keyword_rule(state: State<AppState>, keyword: String, category: String) -> Result<(), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::set_keyword_rule(&conn, &keyword, &category).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_keyword_rule(state: State<AppState>, keyword: String) -> Result<(), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::delete_keyword_rule(&conn, &keyword).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_activity_log(
+    state: State<AppState>,
+    start_ms: i64,
+    end_ms: i64,
+    limit: u32,
+) -> Result<Vec<ActivityEntry>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_activity_log(&conn, start_ms, end_ms, limit).map_err(|e| e.to_string())
 }
 
 // ===== Pet System =====
