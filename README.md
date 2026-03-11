@@ -1,8 +1,16 @@
-# ClickGlow
+<p align="center">
+  <img src="src/assets/logo.png" width="120" />
+</p>
 
-A **Digital Life Simulator** disguised as a productivity app. Track your keyboard, mouse, and app usage — with a virtual pet that thrives when you focus and suffers when you get distracted.
+<h1 align="center">ClickGlow</h1>
 
-**All data stays on your machine. Zero network. Zero telemetry.**
+<p align="center">A <b>Digital Life Simulator</b> disguised as a productivity app.<br/>Track your keyboard, mouse, and app usage — with a virtual pet that thrives when you focus and suffers when you get distracted.</p>
+
+<p align="center"><b>All data stays on your machine. Zero network. Zero telemetry.</b></p>
+
+<p align="center">
+  <img src="src/assets/screenshot.png" width="700" />
+</p>
 
 ## Features
 
