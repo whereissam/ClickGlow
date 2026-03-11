@@ -40,10 +40,11 @@ pub fn setup_tray(
     let status_label = status_text(listener_status.load(Ordering::Relaxed));
     let status_item = MenuItem::with_id(app, "status", &status_label, false, None::<&str>)?;
     let show = MenuItem::with_id(app, "show", "Show Dashboard", true, None::<&str>)?;
+    let buddy = MenuItem::with_id(app, "buddy", "Show Desktop Buddy", true, None::<&str>)?;
     let pause = MenuItem::with_id(app, "pause", "Pause Recording", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
-    let menu = Menu::with_items(app, &[&pet_item, &status_item, &show, &pause, &quit])?;
+    let menu = Menu::with_items(app, &[&pet_item, &status_item, &show, &buddy, &pause, &quit])?;
 
     let _tray = TrayIconBuilder::new()
         .icon(pet_icon(&p.mood))
@@ -75,6 +76,18 @@ pub fn setup_tray(
                     let _ = status_item.set_text(&s);
 
                     log::info!("Recording {}", if is_paused { "paused" } else { "resumed" });
+                }
+                "buddy" => {
+                    if let Some(window) = app.get_webview_window("buddy") {
+                        let visible = window.is_visible().unwrap_or(false);
+                        if visible {
+                            let _ = window.hide();
+                            let _ = buddy.set_text("Show Desktop Buddy");
+                        } else {
+                            let _ = window.show();
+                            let _ = buddy.set_text("Hide Desktop Buddy");
+                        }
+                    }
                 }
                 "quit" => {
                     app.exit(0);

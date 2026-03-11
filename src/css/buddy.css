@@ -1,0 +1,466 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  background: transparent;
+  overflow: hidden;
+  width: 100px;
+  height: 140px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== Container ===== */
+
+#buddy-container {
+  position: relative;
+  width: 100px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  cursor: grab;
+}
+
+#buddy-container:active {
+  cursor: grabbing;
+}
+
+/* ===== Speech Bubble ===== */
+
+.buddy-bubble {
+  position: absolute;
+  top: 0;
+  right: 60px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: scale(0.8) translateY(4px);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.buddy-bubble.visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.buddy-bubble::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 6px solid rgba(0, 0, 0, 0.8);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+}
+
+/* ===== Pet Body — Species ===== */
+
+.buddy-pet {
+  position: relative;
+  width: 64px;
+  height: 56px;
+  transition: transform 0.3s;
+}
+
+.buddy-pet:hover {
+  transform: scale(1.08);
+}
+
+.buddy-body {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: filter 0.3s;
+}
+
+/* -- Slime -- */
+.buddy-pet[data-species="slime"] .buddy-body {
+  width: 52px;
+  height: 40px;
+  background: linear-gradient(180deg, #7ED957, #4CAF50);
+  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  box-shadow: 0 3px 10px rgba(126, 217, 87, 0.4);
+  animation: buddySlimeIdle 2s ease-in-out infinite;
+}
+
+@keyframes buddySlimeIdle {
+  0%, 100% { transform: translateX(-50%) scaleY(1) scaleX(1); }
+  50% { transform: translateX(-50%) scaleY(0.92) scaleX(1.06); }
+}
+
+/* -- Dragon -- */
+.buddy-pet[data-species="dragon"] .buddy-body {
+  width: 56px;
+  height: 44px;
+  background: linear-gradient(180deg, #FF6B35, #E53E3E);
+  border-radius: 40% 40% 50% 50% / 50% 50% 40% 40%;
+  box-shadow: 0 3px 12px rgba(255, 107, 53, 0.4);
+  animation: buddyDragonIdle 1.5s ease-in-out infinite;
+}
+
+.buddy-pet[data-species="dragon"] .buddy-body::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 6px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 12px solid #FF6B35;
+}
+
+.buddy-pet[data-species="dragon"] .buddy-body::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 10px solid #FF6B35;
+}
+
+@keyframes buddyDragonIdle {
+  0%, 100% { transform: translateX(-50%) scaleY(1); }
+  50% { transform: translateX(-50%) scaleY(0.95) scaleX(1.04); }
+}
+
+/* -- Wizard -- */
+.buddy-pet[data-species="wizard"] .buddy-body {
+  width: 52px;
+  height: 44px;
+  background: linear-gradient(180deg, #B388FF, #7C4DFF);
+  border-radius: 35% 35% 50% 50% / 45% 45% 40% 40%;
+  box-shadow: 0 3px 16px rgba(179, 136, 255, 0.5);
+  animation: buddyWizardFloat 3s ease-in-out infinite;
+}
+
+.buddy-pet[data-species="wizard"] .buddy-body::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-bottom: 20px solid #9C27B0;
+}
+
+.buddy-pet[data-species="wizard"] .buddy-body::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #F7B801;
+  box-shadow: 0 0 6px #F7B801;
+}
+
+@keyframes buddyWizardFloat {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
+}
+
+/* ===== Eyes ===== */
+
+.buddy-eyes {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.buddy-eye {
+  width: 6px;
+  height: 7px;
+  background: #222;
+  border-radius: 50%;
+  animation: buddyBlink 4s ease-in-out infinite;
+}
+
+@keyframes buddyBlink {
+  0%, 42%, 44%, 100% { transform: scaleY(1); }
+  43% { transform: scaleY(0.1); }
+}
+
+/* ===== Mouth ===== */
+
+.buddy-mouth {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 5px;
+  border-bottom: 2px solid #222;
+  border-radius: 0 0 50% 50%;
+}
+
+/* ===== Mood Overrides ===== */
+
+/* Happy */
+.buddy-pet[data-mood="happy"] .buddy-mouth {
+  width: 12px;
+  height: 6px;
+}
+
+.buddy-pet[data-mood="happy"] .buddy-body {
+  filter: brightness(1.1);
+}
+
+/* Angry */
+.buddy-pet[data-mood="angry"] .buddy-eye {
+  background: #FF5252;
+  animation: none;
+}
+
+.buddy-pet[data-mood="angry"] .buddy-mouth {
+  border-bottom: none;
+  border-top: 2px solid #FF5252;
+  border-radius: 50% 50% 0 0;
+}
+
+/* Sleeping */
+.buddy-pet[data-mood="sleeping"] .buddy-eye {
+  height: 2px;
+  animation: none;
+}
+
+.buddy-pet[data-mood="sleeping"] .buddy-mouth {
+  display: none;
+}
+
+.buddy-pet[data-mood="sleeping"] .buddy-body {
+  opacity: 0.6;
+  filter: grayscale(0.3);
+}
+
+/* ===== Reaction: Sweating ===== */
+
+.buddy-sweat {
+  display: none;
+}
+
+.buddy-pet[data-reaction="sweating"] .buddy-sweat,
+.buddy-pet[data-reaction="on_fire"] .buddy-sweat {
+  display: block;
+}
+
+.sweat-drop {
+  position: absolute;
+  width: 4px;
+  height: 6px;
+  background: #64B5F6;
+  border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+  animation: sweatFall 1.2s ease-in infinite;
+}
+
+.sweat-drop:first-child {
+  top: 4px;
+  right: 2px;
+  animation-delay: 0s;
+}
+
+.sweat-drop:last-child {
+  top: 8px;
+  right: -2px;
+  animation-delay: 0.6s;
+}
+
+@keyframes sweatFall {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(16px); }
+}
+
+/* ===== Reaction: On Fire ===== */
+
+.buddy-fire {
+  display: none;
+}
+
+.buddy-pet[data-reaction="on_fire"] .buddy-fire {
+  display: block;
+}
+
+.buddy-pet[data-reaction="on_fire"] .buddy-body {
+  animation: buddyShake 0.15s ease-in-out infinite !important;
+  filter: saturate(1.5) brightness(1.2);
+}
+
+.fire-particle {
+  position: absolute;
+  bottom: 30px;
+  border-radius: 50% 50% 50% 50%;
+  background: radial-gradient(circle, #FFEB3B, #FF9800, #F44336);
+  animation: fireFlicker 0.6s ease-in-out infinite alternate;
+}
+
+.fire-particle:nth-child(1) {
+  left: 12px;
+  width: 10px;
+  height: 14px;
+  animation-delay: 0s;
+}
+
+.fire-particle:nth-child(2) {
+  left: 26px;
+  width: 12px;
+  height: 18px;
+  animation-delay: 0.2s;
+}
+
+.fire-particle:nth-child(3) {
+  left: 40px;
+  width: 8px;
+  height: 12px;
+  animation-delay: 0.4s;
+}
+
+@keyframes fireFlicker {
+  0% { transform: scaleY(0.8) translateY(0); opacity: 0.8; }
+  100% { transform: scaleY(1.3) translateY(-6px); opacity: 1; }
+}
+
+@keyframes buddyShake {
+  0%, 100% { transform: translateX(-50%) rotate(0); }
+  25% { transform: translateX(-50%) rotate(-3deg); }
+  75% { transform: translateX(-50%) rotate(3deg); }
+}
+
+/* ===== Reaction: Stressed (RAM) ===== */
+
+.buddy-stress {
+  display: none;
+}
+
+.buddy-pet[data-reaction="stressed"] .buddy-stress {
+  display: block;
+}
+
+.buddy-pet[data-reaction="stressed"] .buddy-body {
+  animation: buddyInflate 1s ease-in-out infinite !important;
+}
+
+.stress-mark {
+  position: absolute;
+  top: -2px;
+  right: 0px;
+  font-size: 16px;
+  font-weight: 900;
+  color: #FF5252;
+  animation: stressPulse 0.8s ease-in-out infinite;
+  font-family: -apple-system, sans-serif;
+}
+
+@keyframes buddyInflate {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.12, 1.08); }
+}
+
+@keyframes stressPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* ===== Reaction: Scolding (distracted) ===== */
+
+.buddy-pet[data-reaction="scolding"] .buddy-body {
+  animation: buddyScold 0.3s ease-in-out infinite !important;
+  filter: hue-rotate(-20deg) saturate(1.5);
+}
+
+.buddy-pet[data-reaction="scolding"] .buddy-eye {
+  background: #FF5252;
+  animation: none;
+}
+
+@keyframes buddyScold {
+  0%, 100% { transform: translateX(-50%) translateX(0); }
+  25% { transform: translateX(-50%) translateX(-2px); }
+  75% { transform: translateX(-50%) translateX(2px); }
+}
+
+/* ===== Grip Hands (clinging to edge) ===== */
+
+.buddy-grip {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.grip-hand {
+  width: 8px;
+  height: 12px;
+  background: #7ED957;
+  border-radius: 4px 0 0 4px;
+  box-shadow: 1px 0 3px rgba(0,0,0,0.2);
+}
+
+/* Adjust grip color by species */
+.buddy-pet[data-species="dragon"] ~ .buddy-grip .grip-hand {
+  background: #FF6B35;
+}
+
+.buddy-pet[data-species="wizard"] ~ .buddy-grip .grip-hand {
+  background: #B388FF;
+}
+
+/* ===== Edge Climbing Animation ===== */
+
+#buddy-container {
+  animation: buddyClimb 8s ease-in-out infinite;
+}
+
+@keyframes buddyClimb {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-10px); }
+  50% { transform: translateY(-5px); }
+  75% { transform: translateY(-15px); }
+}
+
+/* ===== Click Interactions ===== */
+
+.buddy-pet.clicked {
+  animation: buddyJump 0.5s ease !important;
+}
+
+@keyframes buddyJump {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-20px) scale(1.1, 0.9); }
+  60% { transform: translateY(-5px) scale(0.95, 1.05); }
+}
+
+.buddy-pet.double-clicked {
+  animation: buddyBackflip 0.8s ease !important;
+}
+
+@keyframes buddyBackflip {
+  0% { transform: translateY(0) rotate(0deg); }
+  40% { transform: translateY(-30px) rotate(180deg); }
+  70% { transform: translateY(-10px) rotate(320deg); }
+  100% { transform: translateY(0) rotate(360deg); }
+}

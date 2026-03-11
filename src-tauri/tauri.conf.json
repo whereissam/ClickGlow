@@ -8,6 +8,7 @@
   },
   "app": {
     "withGlobalTauri": true,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
@@ -19,6 +20,18 @@
         "center": true,
         "decorations": true,
         "transparent": false
+      },
+      {
+        "label": "buddy",
+        "url": "buddy.html",
+        "width": 100,
+        "height": 140,
+        "resizable": false,
+        "visible": false,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
       }
     ],
     "security": {

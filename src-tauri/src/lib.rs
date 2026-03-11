@@ -1,3 +1,4 @@
+pub mod buddy;
 pub mod commands;
 pub mod db;
 pub mod input;

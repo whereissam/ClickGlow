@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="css/buddy.css" />
+</head>
+<body>
+  <div id="buddy-container" data-edge="right">
+    <!-- Speech bubble -->
+    <div class="buddy-bubble" id="buddyBubble"></div>
+
+    <!-- The pet character (reuses same CSS species system) -->
+    <div class="buddy-pet" id="buddyPet" data-species="slime" data-mood="idle" data-reaction="normal">
+      <div class="buddy-body"></div>
+      <div class="buddy-eyes">
+        <span class="buddy-eye left"></span>
+        <span class="buddy-eye right"></span>
+      </div>
+      <div class="buddy-mouth"></div>
+
+      <!-- Sweat drops (shown when sweating) -->
+      <div class="buddy-sweat">
+        <span class="sweat-drop"></span>
+        <span class="sweat-drop"></span>
+      </div>
+
+      <!-- Fire effect (shown when on_fire) -->
+      <div class="buddy-fire">
+        <span class="fire-particle"></span>
+        <span class="fire-particle"></span>
+        <span class="fire-particle"></span>
+      </div>
+
+      <!-- Stress puff (shown when stressed / high RAM) -->
+      <div class="buddy-stress">
+        <span class="stress-mark">!</span>
+      </div>
+    </div>
+
+    <!-- Grip marks on screen edge -->
+    <div class="buddy-grip">
+      <span class="grip-hand left"></span>
+      <span class="grip-hand right"></span>
+    </div>
+  </div>
+
+  <script src="js/buddy.js"></script>
+</body>
+</html>

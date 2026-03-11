@@ -4,6 +4,8 @@
 use std::sync::atomic::{AtomicBool, AtomicU8};
 use std::sync::Arc;
 
+use tauri::Manager;
+
 use clickglow::commands;
 use clickglow::db::connection::Database;
 use clickglow::input::{buffer, listener};
@@ -73,8 +75,31 @@ fn main() {
             commands::feed_pet,
             commands::damage_pet,
             commands::rename_pet,
+            commands::get_system_stats,
+            commands::get_buddy_state,
+            commands::toggle_buddy,
+            commands::set_buddy_position,
         ])
         .setup(move |app| {
+            // Create buddy floating window
+            // Buddy window is defined in tauri.conf.json with transparent+frameless settings.
+            // We just need to get the existing window and position it.
+            let buddy_window = app.get_webview_window("buddy");
+
+            if let Some(w) = buddy_window {
+                // Position at right edge of screen
+                if let Ok(Some(m)) = w.current_monitor() {
+                    let size = m.size();
+                    let _ = w.set_position(tauri::Position::Physical(
+                        tauri::PhysicalPosition {
+                            x: (size.width as i32) - 110,
+                            y: (size.height as i32) / 2 - 70,
+                        },
+                    ));
+                }
+                log::info!("Buddy window positioned");
+            }
+
             menu::setup_tray(app.handle(), paused.clone(), listener_status.clone(), db.clone(), distracted.clone())
                 .expect("Failed to setup tray");
             log::info!("ClickGlow started");

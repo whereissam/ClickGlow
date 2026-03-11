@@ -1275,3 +1275,20 @@ window.addEventListener('resize', () => {
   if (categoryChart) categoryChart.resize();
   if (appUsageChart) appUsageChart.resize();
 });
+
+// ===== Desktop Buddy Toggle =====
+
+let buddyVisible = false;
+
+async function toggleDesktopBuddy() {
+  try {
+    buddyVisible = await invoke('toggle_buddy');
+    const btn = document.getElementById('buddyToggleBtn');
+    if (btn) {
+      btn.textContent = buddyVisible ? 'Call Pet Back' : 'Release Pet to Desktop Edge';
+    }
+    showToast(buddyVisible ? 'Pet released to desktop edge!' : 'Pet returned home');
+  } catch (e) {
+    showToast('Failed to toggle buddy: ' + e, true);
+  }
+}

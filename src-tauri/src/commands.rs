@@ -1,6 +1,7 @@
 use std::sync::atomic::Ordering;
 use tauri::State;
 
+use crate::buddy::{self, BuddyReaction, SystemStats};
 use crate::db::queries::{self, ActivityEntry, AppUsage, DailySummary, HeatmapPoint, KeyFrequency, KeywordRule, TimeThief, WeeklyReport};
 use crate::pet::{self, PetState};
 use crate::platform;
@@ -293,4 +294,48 @@ pub fn rename_pet(state: State<AppState>, name: String) -> Result<PetState, Stri
     p.name = name;
     pet::save_pet(&state.db, &p)?;
     Ok(p)
+}
+
+// ===== Desktop Buddy =====
+
+#[tauri::command]
+pub fn get_system_stats() -> SystemStats {
+    buddy::get_system_stats()
+}
+
+#[tauri::command]
+pub fn get_buddy_state(state: State<AppState>) -> BuddyReaction {
+    let stats = buddy::get_system_stats();
+    let distracted = state.distracted.load(Ordering::Relaxed);
+    buddy::compute_reaction(&stats, distracted)
+}
+
+#[tauri::command]
+pub fn toggle_buddy(app: tauri::AppHandle) -> Result<bool, String> {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("buddy") {
+        let visible = window.is_visible().unwrap_or(false);
+        if visible {
+            window.hide().map_err(|e| e.to_string())?;
+        } else {
+            window.show().map_err(|e| e.to_string())?;
+        }
+        Ok(!visible)
+    } else {
+        Err("Buddy window not found".to_string())
+    }
+}
+
+#[tauri::command]
+pub fn set_buddy_position(app: tauri::AppHandle, x: f64, y: f64) -> Result<(), String> {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("buddy") {
+        window
+            .set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                x: x as i32,
+                y: y as i32,
+            }))
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
