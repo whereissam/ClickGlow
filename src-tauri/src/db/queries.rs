@@ -3,6 +3,27 @@ use serde::Serialize;
 
 use crate::input::listener::InputEvent;
 
+// --- Metadata helpers ---
+
+pub fn get_metadata(conn: &Connection, key: &str) -> Result<Option<String>, rusqlite::Error> {
+    conn.query_row(
+        "SELECT value FROM metadata WHERE key = ?1",
+        rusqlite::params![key],
+        |row| row.get(0),
+    )
+    .optional()
+}
+
+pub fn set_metadata(conn: &Connection, key: &str, value: &str) -> Result<(), rusqlite::Error> {
+    conn.execute(
+        "INSERT INTO metadata (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = ?2",
+        rusqlite::params![key, value],
+    )?;
+    Ok(())
+}
+
+use rusqlite::OptionalExtension;
+
 #[derive(Debug, Serialize)]
 pub struct HeatmapPoint {
     pub x: f64,

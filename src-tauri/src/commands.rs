@@ -72,3 +72,18 @@ pub fn get_listener_status(state: State<AppState>) -> String {
 pub fn check_accessibility() -> bool {
     platform::check_accessibility_permission()
 }
+
+/// Check if onboarding has been completed
+#[tauri::command]
+pub fn get_onboarding_done(state: State<AppState>) -> Result<bool, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let val = queries::get_metadata(&conn, "onboarding_done").map_err(|e| e.to_string())?;
+    Ok(val.as_deref() == Some("1"))
+}
+
+/// Mark onboarding as completed
+#[tauri::command]
+pub fn set_onboarding_done(state: State<AppState>) -> Result<(), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "onboarding_done", "1").map_err(|e| e.to_string())
+}

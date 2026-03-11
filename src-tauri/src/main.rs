@@ -44,6 +44,8 @@ fn main() {
             commands::toggle_recording,
             commands::get_listener_status,
             commands::check_accessibility,
+            commands::get_onboarding_done,
+            commands::set_onboarding_done,
         ])
         .setup(move |app| {
             menu::setup_tray(app.handle(), paused.clone(), listener_status.clone())
