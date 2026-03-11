@@ -45,14 +45,17 @@
 - [x] Surface listener status in tray menu (● Recording / ⏸ Paused / ⚠ Error)
 - [x] macOS Accessibility permission detection via `AXIsProcessTrustedWithOptions` + UI banner
 
-## Phase 4: Reports and Optimization
+## Phase 4: Reports and Optimization - DONE
 
-- [ ] Implement weekly report scheduler (check once/hour, compare ISO week)
-- [ ] Implement report data aggregation for full prior week
-- [ ] Add "Weekly Report" view to dashboard
-- [ ] PNG export of heatmap (canvas.toBlob via IPC)
-- [ ] Data retention settings (auto-delete after N months)
-- [ ] Performance: pre-aggregate hourly buckets for large datasets
+- [x] Weekly report scheduler (background thread, checks once/hour, compares ISO week)
+- [x] Report data aggregation for full prior week (stored in `weekly_reports` table)
+- [x] "Weekly Report" tab with stats, avg daily rates, hourly chart, top keys chart
+- [x] Week selector dropdown + "Generate Current" button for on-demand reports
+- [x] PNG export of heatmap (canvas.toBlob → save to Downloads via IPC)
+- [x] Data retention settings (auto-delete after N months, configurable in Settings tab)
+- [x] Pre-aggregate hourly buckets (`hourly_stats` table, auto-aggregated daily)
+- [x] Settings tab with retention config and about info
+- [x] Migration v2: `hourly_stats` + `weekly_reports` tables
 - [ ] Windows testing and platform-specific fixes
 - [ ] Linux testing (X11; document Wayland limitations)
 

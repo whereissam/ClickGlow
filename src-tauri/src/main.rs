@@ -7,6 +7,7 @@ use std::sync::Arc;
 use clickglow::commands;
 use clickglow::db::connection::Database;
 use clickglow::input::{buffer, listener};
+use clickglow::reporting;
 use clickglow::state::AppState;
 use clickglow::tray::menu;
 
@@ -22,6 +23,7 @@ fn main() {
     let (tx, rx) = std::sync::mpsc::channel();
     listener::start_listener(tx, paused.clone(), listener_status.clone());
     buffer::start_buffer(rx, db.clone());
+    reporting::start_scheduler(db.clone());
 
     let app_state = AppState {
         db: db.clone(),
@@ -46,6 +48,12 @@ fn main() {
             commands::check_accessibility,
             commands::get_onboarding_done,
             commands::set_onboarding_done,
+            commands::get_weekly_report,
+            commands::generate_weekly_report,
+            commands::list_weekly_reports,
+            commands::get_retention_months,
+            commands::set_retention_months,
+            commands::save_png,
         ])
         .setup(move |app| {
             menu::setup_tray(app.handle(), paused.clone(), listener_status.clone())

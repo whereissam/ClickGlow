@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 use tauri::State;
 
-use crate::db::queries::{self, DailySummary, HeatmapPoint, KeyFrequency};
+use crate::db::queries::{self, DailySummary, HeatmapPoint, KeyFrequency, WeeklyReport};
 use crate::platform;
 use crate::state::{AppState, STATUS_ERROR, STATUS_PAUSED, STATUS_RUNNING};
 
@@ -86,4 +86,59 @@ pub fn get_onboarding_done(state: State<AppState>) -> Result<bool, String> {
 pub fn set_onboarding_done(state: State<AppState>) -> Result<(), String> {
     let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
     queries::set_metadata(&conn, "onboarding_done", "1").map_err(|e| e.to_string())
+}
+
+// ===== Weekly Reports =====
+
+#[tauri::command]
+pub fn get_weekly_report(
+    state: State<AppState>,
+    iso_week: String,
+) -> Result<Option<WeeklyReport>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_weekly_report(&conn, &iso_week).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn generate_weekly_report(
+    state: State<AppState>,
+    iso_week: String,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<WeeklyReport, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::generate_weekly_report(&conn, &iso_week, start_ms, end_ms).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn list_weekly_reports(state: State<AppState>) -> Result<Vec<String>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::list_weekly_reports(&conn).map_err(|e| e.to_string())
+}
+
+// ===== Data Retention =====
+
+#[tauri::command]
+pub fn get_retention_months(state: State<AppState>) -> Result<u32, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let val = queries::get_metadata(&conn, "retention_months").map_err(|e| e.to_string())?;
+    Ok(val.and_then(|s| s.parse().ok()).unwrap_or(0))
+}
+
+#[tauri::command]
+pub fn set_retention_months(state: State<AppState>, months: u32) -> Result<(), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "retention_months", &months.to_string()).map_err(|e| e.to_string())
+}
+
+// ===== PNG Export =====
+
+#[tauri::command]
+pub fn save_png(data: Vec<u8>, filename: String) -> Result<String, String> {
+    let downloads = dirs::download_dir()
+        .or_else(dirs::desktop_dir)
+        .ok_or("Cannot find Downloads folder")?;
+    let path = downloads.join(&filename);
+    std::fs::write(&path, &data).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
 }
