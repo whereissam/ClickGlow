@@ -1,0 +1,61 @@
+:root {
+  --bg: #0a0a0f;
+  --bg-card: #141419;
+  --bg-hover: #1c1c24;
+  --accent: #F7B801;
+  --accent-secondary: #FF6B35;
+  --green: #7ED957;
+  --blue: #5B8CFF;
+  --purple: #B388FF;
+  --text: #E8E6E3;
+  --text-dim: #8B8D94;
+  --text-muted: #5C5E66;
+  --border: #1e1e28;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+#app {
+  min-height: 100vh;
+}
