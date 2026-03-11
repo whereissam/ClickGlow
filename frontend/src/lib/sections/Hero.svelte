@@ -36,7 +36,7 @@
     // Show random quote
     quote = quotes[Math.floor(Math.random() * quotes.length)];
     showQuote = true;
-    setTimeout(() => showQuote = false, 2200);
+    setTimeout(() => showQuote = false, 4500);
 
     // Spawn glowing dot particles from click point
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -59,6 +59,7 @@
   }
 
   function download() {
+    window.open("https://github.com/whereissam/ClickGlow/releases", "_blank");
     showInstallModal = true;
   }
 

@@ -3,6 +3,7 @@
   let copied = $state(false);
 
   function download() {
+    window.open("https://github.com/whereissam/ClickGlow/releases", "_blank");
     showInstallModal = true;
   }
 
