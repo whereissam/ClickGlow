@@ -94,6 +94,7 @@ fn main() {
             commands::acknowledge_break,
             commands::snooze_reminder,
             commands::get_water_count,
+            commands::get_distance_stats,
         ])
         .setup(move |app| {
             // Create buddy floating window

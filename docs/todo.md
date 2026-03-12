@@ -159,11 +159,11 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 
 ### 7A: Mouse Odometer (Real-World Distance)
 
-- [ ] Track total mouse pixel distance moved per day
-- [ ] Convert pixels → real distance using screen DPI (e.g., "3.2 km today")
-- [ ] Fun comparisons: "You climbed Mt. Jade!" / "You crossed the Golden Gate Bridge!"
-- [ ] Daily/weekly/all-time distance stats
-- [ ] Achievement badges for distance milestones
+- [x] Track total mouse pixel distance moved per day
+- [x] Convert pixels → real distance using screen DPI (e.g., "3.2 km today")
+- [x] Fun comparisons: "You climbed Mt. Jade!" / "You crossed the Golden Gate Bridge!"
+- [x] Daily/weekly/all-time distance stats
+- [x] Achievement badges for distance milestones
 
 ### 7B: Virtual Keyboard "Paint Wear" Simulator
 

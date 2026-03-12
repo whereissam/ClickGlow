@@ -4,6 +4,7 @@ const MIGRATION_V1: &str = include_str!("../../migrations/001_initial.sql");
 const MIGRATION_V2: &str = include_str!("../../migrations/002_hourly_stats.sql");
 const MIGRATION_V3: &str = include_str!("../../migrations/003_app_tracking.sql");
 const MIGRATION_V4: &str = include_str!("../../migrations/004_keyword_rules.sql");
+const MIGRATION_V5: &str = include_str!("../../migrations/005_mouse_distance.sql");
 
 pub fn run_migrations(conn: &Connection) -> Result<(), Box<dyn std::error::Error>> {
     let version: i32 = conn.pragma_query_value(None, "user_version", |row| row.get(0))?;
@@ -30,6 +31,12 @@ pub fn run_migrations(conn: &Connection) -> Result<(), Box<dyn std::error::Error
         conn.execute_batch(MIGRATION_V4)?;
         conn.pragma_update(None, "user_version", 4)?;
         log::info!("Ran migration v4 (keyword_rules)");
+    }
+
+    if version < 5 {
+        conn.execute_batch(MIGRATION_V5)?;
+        conn.pragma_update(None, "user_version", 5)?;
+        log::info!("Ran migration v5 (mouse_distance)");
     }
 
     Ok(())

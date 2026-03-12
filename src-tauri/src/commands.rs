@@ -2,7 +2,7 @@ use std::sync::atomic::Ordering;
 use tauri::State;
 
 use crate::buddy::{self, BuddyReaction, ReminderCheck, ReminderConfig, ReminderState, SystemStats};
-use crate::db::queries::{self, ActivityEntry, AppUsage, DailySummary, HeatmapPoint, KeyFrequency, KeywordRule, TimeThief, WeeklyReport};
+use crate::db::queries::{self, ActivityEntry, AppUsage, DailySummary, DistanceStats, HeatmapPoint, KeyFrequency, KeywordRule, TimeThief, WeeklyReport};
 use crate::pet::{self, PetState};
 use crate::platform;
 use crate::state::{AppState, STATUS_ERROR, STATUS_PAUSED, STATUS_RUNNING};
@@ -507,6 +507,50 @@ pub fn get_water_count(state: State<AppState>) -> i32 {
         _ => return 0,
     };
     reminder_state.water_count_today
+}
+
+// ===== Mouse Odometer =====
+
+#[tauri::command]
+pub fn get_distance_stats(state: State<AppState>) -> Result<DistanceStats, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let today = today_date_str();
+    queries::get_distance_stats(&conn, &today).map_err(|e| e.to_string())
+}
+
+fn today_date_str() -> String {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    // Use local time
+    #[cfg(unix)]
+    {
+        use std::mem::MaybeUninit;
+        unsafe {
+            let t = now as libc::time_t;
+            let mut tm = MaybeUninit::<libc::tm>::uninit();
+            libc::localtime_r(&t, tm.as_mut_ptr());
+            let tm = tm.assume_init();
+            format!("{:04}-{:02}-{:02}", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday)
+        }
+    }
+    #[cfg(not(unix))]
+    {
+        // Fallback to UTC
+        let days = now / 86400;
+        let z = days as i64 + 719468;
+        let era = if z >= 0 { z } else { z - 146096 } / 146097;
+        let doe = (z - era * 146097) as u32;
+        let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+        let y = yoe as i64 + era * 400;
+        let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+        let mp = (5 * doy + 2) / 153;
+        let d = doy - (153 * mp + 2) / 5 + 1;
+        let m = if mp < 10 { mp + 3 } else { mp - 9 };
+        let y = if m <= 2 { y + 1 } else { y };
+        format!("{:04}-{:02}-{:02}", y, m, d)
+    }
 }
 
 /// Get screen dimensions for buddy edge detection

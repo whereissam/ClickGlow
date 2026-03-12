@@ -648,6 +648,91 @@ pub fn delete_keyword_rule(conn: &Connection, keyword: &str) -> Result<(), rusql
     Ok(())
 }
 
+// ===== Mouse Distance (Odometer) =====
+
+/// Add pixel distance for a given day (accumulates)
+pub fn add_mouse_distance(conn: &Connection, date_key: &str, pixels: f64, dpi: f64) -> Result<(), rusqlite::Error> {
+    conn.execute(
+        "INSERT INTO mouse_distance (date_key, pixels, screen_dpi)
+         VALUES (?1, ?2, ?3)
+         ON CONFLICT(date_key) DO UPDATE SET pixels = pixels + ?2, screen_dpi = ?3",
+        rusqlite::params![date_key, pixels, dpi],
+    )?;
+    Ok(())
+}
+
+#[derive(Debug, Serialize)]
+pub struct DistanceStats {
+    pub today_pixels: f64,
+    pub today_meters: f64,
+    pub week_pixels: f64,
+    pub week_meters: f64,
+    pub alltime_pixels: f64,
+    pub alltime_meters: f64,
+    pub daily_history: Vec<DailyDistance>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DailyDistance {
+    pub date_key: String,
+    pub pixels: f64,
+    pub meters: f64,
+}
+
+/// Get distance stats: today, this week (last 7 days), and all-time
+pub fn get_distance_stats(conn: &Connection, today: &str) -> Result<DistanceStats, rusqlite::Error> {
+    // Today
+    let today_row: Option<(f64, f64)> = conn.query_row(
+        "SELECT pixels, screen_dpi FROM mouse_distance WHERE date_key = ?1",
+        rusqlite::params![today],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    ).optional()?;
+    let (today_pixels, today_dpi) = today_row.unwrap_or((0.0, 110.0));
+    let today_meters = pixels_to_meters(today_pixels, today_dpi);
+
+    // Last 7 days
+    let mut stmt = conn.prepare(
+        "SELECT date_key, pixels, screen_dpi FROM mouse_distance ORDER BY date_key DESC LIMIT 7"
+    )?;
+    let rows = stmt.query_map([], |row| {
+        Ok((row.get::<_, String>(0)?, row.get::<_, f64>(1)?, row.get::<_, f64>(2)?))
+    })?;
+    let mut week_pixels = 0.0;
+    let mut week_meters = 0.0;
+    let mut daily_history = Vec::new();
+    for row in rows {
+        let (date_key, px, dpi) = row?;
+        let m = pixels_to_meters(px, dpi);
+        week_pixels += px;
+        week_meters += m;
+        daily_history.push(DailyDistance { date_key, pixels: px, meters: m });
+    }
+
+    // All-time
+    let alltime_row: (f64, f64) = conn.query_row(
+        "SELECT COALESCE(SUM(pixels), 0), AVG(screen_dpi) FROM mouse_distance",
+        [],
+        |row| Ok((row.get(0)?, row.get::<_, f64>(1).unwrap_or(110.0))),
+    )?;
+    let alltime_meters = pixels_to_meters(alltime_row.0, alltime_row.1);
+
+    Ok(DistanceStats {
+        today_pixels,
+        today_meters,
+        week_pixels,
+        week_meters,
+        alltime_pixels: alltime_row.0,
+        alltime_meters,
+        daily_history,
+    })
+}
+
+/// Convert pixels to meters using DPI
+fn pixels_to_meters(pixels: f64, dpi: f64) -> f64 {
+    // 1 inch = 0.0254 meters, pixels / dpi = inches
+    (pixels / dpi) * 0.0254
+}
+
 /// Get distraction time in the last N minutes (for pet damage calculation)
 pub fn get_recent_distraction_ms(conn: &Connection, since_ms: i64) -> Result<i64, rusqlite::Error> {
     conn.query_row(

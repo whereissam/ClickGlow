@@ -6,6 +6,7 @@ import { loadAppsPanel } from './apps.js';
 import { loadWeeklyPanel } from './weekly.js';
 import { loadActivityLog } from './activity-log.js';
 import { loadSettings, initOnboarding } from './settings.js';
+import { loadOdometer } from './odometer.js';
 import { resizeAllCharts } from './charts.js';
 
 // Register tab loaders
@@ -13,6 +14,7 @@ registerTabLoader('dashboard', () => {
   loadDashboard();
   loadHeatmap();
   loadKeyboardChart();
+  loadOdometer();
 });
 registerTabLoader('pet', loadPetPanel);
 registerTabLoader('apps', loadAppsPanel);
@@ -25,6 +27,7 @@ setOnTimeRangeChange(() => {
   loadDashboard();
   loadHeatmap();
   loadKeyboardChart();
+  loadOdometer();
 });
 
 // --- Init ---
@@ -36,6 +39,7 @@ window.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
   loadHeatmap();
   loadKeyboardChart();
+  loadOdometer();
   updateStatus();
   checkAccessibility();
   setInterval(updateStatus, 5000);
