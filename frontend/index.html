@@ -5,6 +5,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ClickGlow — Privacy-First Digital Life Simulator</title>
   <meta name="description" content="Track your keyboard, mouse & app activity with a gamified focus pet. All data stays local. Zero telemetry." />
+  <meta name="keywords" content="keyboard tracker, mouse heatmap, focus pet, productivity gamification, macOS app, privacy-first, tauri app, activity tracker, digital wellness, open source" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://clickglow.app" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://clickglow.app" />
+  <meta property="og:title" content="ClickGlow — Your Digital Life, Gamified" />
+  <meta property="og:description" content="Track keyboard, mouse & app activity with beautiful heatmaps and a virtual focus pet. 100% local data, zero telemetry. Free & open source for macOS." />
+  <meta property="og:image" content="https://clickglow.app/assets/screenshot.png" />
+  <meta property="og:site_name" content="ClickGlow" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ClickGlow — Your Digital Life, Gamified" />
+  <meta name="twitter:description" content="Track keyboard, mouse & app activity with beautiful heatmaps and a virtual focus pet. 100% local data, zero telemetry." />
+  <meta name="twitter:image" content="https://clickglow.app/assets/screenshot.png" />
+
+  <!-- JSON-LD: SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ClickGlow",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "macOS",
+    "description": "Privacy-first digital life simulator that tracks keyboard, mouse and app activity with beautiful heatmaps and a gamified virtual focus pet. All data stays local in SQLite — zero telemetry.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "softwareVersion": "0.1.0",
+    "license": "https://opensource.org/licenses/MIT",
+    "downloadUrl": "https://github.com/whereissam/ClickGlow/releases",
+    "sourceOrganization": {
+      "@type": "Organization",
+      "name": "ClickGlow",
+      "url": "https://github.com/whereissam/ClickGlow"
+    },
+    "url": "https://clickglow.app",
+    "image": "https://clickglow.app/assets/screenshot.png"
+  }
+  </script>
+
+  <!-- JSON-LD: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Is ClickGlow really free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — ClickGlow is 100% free and open source under the MIT license. No premium tiers, no subscriptions, no ads."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does it send my data anywhere?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Never. All data is stored locally in a SQLite database on your Mac. There are zero network calls, zero analytics SDKs, and zero telemetry. Your keystroke and mouse data never leaves your machine."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why does macOS say the app is damaged?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ClickGlow isn't code-signed with an Apple Developer certificate yet. macOS quarantines unsigned apps by default. Run 'xattr -cr /Applications/ClickGlow.app' in Terminal to fix it — this just removes the quarantine flag."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What permissions does it need?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ClickGlow needs Accessibility permission to capture keyboard and mouse events. It also requests Screen Recording permission to detect which app is in the foreground. Both are standard macOS permissions for input tracking apps."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will there be a Windows/Linux version?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It's on the roadmap. ClickGlow is built with Tauri, which supports cross-platform builds. The Rust backend is already platform-agnostic — we just need to adapt the input capture layer for each OS."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does the Focus Pet work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your pet gains HP and XP when you complete Pomodoro focus sessions. It loses HP when you spend time on distraction sites (configurable). If HP reaches 0, your pet falls asleep and your streak resets. Earn enough XP and your pet evolves."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I export my data?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — you can export heatmaps as PNG images and view raw data in the SQLite database directly. CSV export for all activity data is planned for a future release."
+        }
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="/assets/logo.png" />
