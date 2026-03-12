@@ -167,11 +167,11 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 
 ### 7B: Virtual Keyboard "Paint Wear" Simulator
 
-- [ ] Render a virtual keyboard in UI
-- [ ] Key opacity/texture degrades based on keystroke count
-- [ ] Stages: pristine → faded → cracked → hole → missing keycap
-- [ ] Visual "wear heatmap" on the keyboard layout
-- [ ] Fun stat: "Your spacebar has been hit 42,069 times"
+- [x] Render a virtual keyboard in UI
+- [x] Key opacity/texture degrades based on keystroke count
+- [x] Stages: pristine → faded → cracked → hole → missing keycap
+- [x] Visual "wear heatmap" on the keyboard layout
+- [x] Fun stat: "Your spacebar has been hit 42,069 times"
 
 ### 7C: APM (Actions Per Minute) Flow Mode
 

@@ -7,6 +7,7 @@ import { loadWeeklyPanel } from './weekly.js';
 import { loadActivityLog } from './activity-log.js';
 import { loadSettings, initOnboarding } from './settings.js';
 import { loadOdometer } from './odometer.js';
+import { loadKeyboardWear } from './keyboard-wear.js';
 import { resizeAllCharts } from './charts.js';
 
 // Register tab loaders
@@ -15,6 +16,10 @@ registerTabLoader('dashboard', () => {
   loadHeatmap();
   loadKeyboardChart();
   loadOdometer();
+});
+registerTabLoader('keyboard', () => {
+  loadKeyboardChart();
+  loadKeyboardWear();
 });
 registerTabLoader('pet', loadPetPanel);
 registerTabLoader('apps', loadAppsPanel);
