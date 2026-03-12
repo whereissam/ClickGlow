@@ -115,22 +115,22 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 - [ ] Edge snapping: pet "sticks" to nearest screen edge when released
 - [x] Toggle on/off from tray menu (`toggle_buddy` command)
 
-### 6B: Climbing & Edge Animations - PARTIAL
+### 6B: Climbing & Edge Animations - DONE
 
 - [x] Idle animation: pet hangs on screen edge, gentle sway (buddyClimb 8s keyframe)
 - [x] Climbing animation: pet crawls up/down the edge periodically
-- [ ] Peek animation: pet peeks from behind the edge, hides when mouse approaches
-- [ ] Walk animation: pet walks along bottom/top edge
-- [ ] Transition between edges (climb around corners)
+- [x] Peek animation: pet peeks from behind the edge, hides when mouse approaches
+- [x] Walk animation: pet walks along all edges (vertical on left/right, horizontal on top/bottom)
+- [x] Transition between edges (climb around corners with rotation animation)
 
 ### 6C: System-Reactive Behaviors - DONE
 
 - [x] **CPU temperature monitor** (Rust `sysinfo` crate) — polled via `get_buddy_state`
   - [x] CPU > 80°C → pet starts sweating (sweat drops animation)
   - [x] CPU > 95°C → pet catches fire / melting animation + shake
-- [ ] **Fan speed monitor** — detect high RPM
-  - [ ] Fan > 5000 RPM → pet gets "blown away" animation (hair/body fluttering)
-  - [ ] Fan max → pet flies off screen edge, slowly crawls back
+- [x] **Fan speed monitor** — detect high RPM via ioreg on macOS
+  - [x] Fan > 5000 RPM → pet gets "windy" animation (body fluttering/skewing)
+  - [x] Fan > 6000 RPM → pet gets "blown away", flies off screen, slowly crawls back
 - [x] **Memory pressure** — high RAM usage
   - [x] RAM > 90% → pet inflates like a balloon, looks stressed (buddyInflate animation)
 - [x] Distraction detected → pet shakes with red eyes + scolding messages ("Shouldn't you be coding?")
@@ -143,14 +143,15 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 - [ ] Snooze button on reminder (pet looks disappointed)
 - [ ] Reminder history: "You drank 8 glasses today!"
 
-### 6E: Fun Interactions - PARTIAL
+### 6E: Fun Interactions - DONE
 
 - [x] Click pet → random reaction (jump + speech bubble with random message)
 - [x] Double-click → pet does a backflip (buddyBackflip animation)
-- [ ] Right-click → context menu (feed, poke, sleep, settings)
-- [ ] Drag pet away from edge → pet panics and scrambles back
+- [x] Right-click → context menu (Feed, Poke, Sleep, Boss Fight, Walk, Peek)
+- [x] Drag pet away from edge → pet panics and scrambles back to original position
 - [x] Idle messages every 30s (30% chance): "Keep going!", "*yawn*", "Ship it!", etc.
-- [ ] Mouse cursor near pet → pet notices and watches cursor
+- [x] Mouse cursor near pet → pet eyes track cursor position
+- [x] Autonomous behaviors: pet randomly peeks/walks on its own every ~60s
 
 ---
 

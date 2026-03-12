@@ -393,6 +393,42 @@ pub fn get_weekly_time_thief(state: State<AppState>) -> Result<Option<String>, S
     }
 }
 
+/// Get screen dimensions for buddy edge detection
+#[tauri::command]
+pub fn get_screen_info(app: tauri::AppHandle) -> Result<(u32, u32), String> {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("buddy") {
+        if let Ok(Some(m)) = window.current_monitor() {
+            let size = m.size();
+            return Ok((size.width, size.height));
+        }
+    }
+    Err("Cannot get screen info".to_string())
+}
+
+/// Get buddy window position
+#[tauri::command]
+pub fn get_buddy_position(app: tauri::AppHandle) -> Result<(i32, i32), String> {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("buddy") {
+        let pos = window.outer_position().map_err(|e| e.to_string())?;
+        return Ok((pos.x, pos.y));
+    }
+    Err("Buddy window not found".to_string())
+}
+
+/// Resize buddy window (needed for walk mode along bottom edge)
+#[tauri::command]
+pub fn set_buddy_size(app: tauri::AppHandle, w: u32, h: u32) -> Result<(), String> {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("buddy") {
+        window
+            .set_size(tauri::Size::Physical(tauri::PhysicalSize { width: w, height: h }))
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub fn set_buddy_position(app: tauri::AppHandle, x: f64, y: f64) -> Result<(), String> {
     use tauri::Manager;

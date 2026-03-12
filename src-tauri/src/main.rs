@@ -79,6 +79,9 @@ fn main() {
             commands::get_buddy_state,
             commands::toggle_buddy,
             commands::set_buddy_position,
+            commands::get_screen_info,
+            commands::get_buddy_position,
+            commands::set_buddy_size,
             commands::check_milestone,
             commands::start_boss_fight,
             commands::get_boss_fight,
@@ -97,8 +100,8 @@ fn main() {
                     let size = m.size();
                     let _ = w.set_position(tauri::Position::Physical(
                         tauri::PhysicalPosition {
-                            x: (size.width as i32) - 110,
-                            y: (size.height as i32) / 2 - 70,
+                            x: (size.width as i32) - 200,
+                            y: (size.height as i32) / 2 - 90,
                         },
                     ));
                 }

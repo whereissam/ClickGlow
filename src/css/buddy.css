@@ -6,9 +6,9 @@
 
 html, body {
   background: transparent;
-  overflow: hidden;
-  width: 100px;
-  height: 140px;
+  overflow: visible;
+  width: 200px;
+  height: 180px;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -17,13 +17,14 @@ html, body {
 
 #buddy-container {
   position: relative;
-  width: 100px;
-  height: 140px;
+  width: 200px;
+  height: 180px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   cursor: grab;
+  padding-top: 40px;
 }
 
 #buddy-container:active {
@@ -34,39 +35,40 @@ html, body {
 
 .buddy-bubble {
   position: absolute;
-  top: 0;
-  right: 60px;
-  background: rgba(0, 0, 0, 0.8);
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.8) translateY(4px);
+  background: rgba(0, 0, 0, 0.85);
   color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 10px;
   font-weight: 600;
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 8px;
   white-space: nowrap;
   opacity: 0;
-  transform: scale(0.8) translateY(4px);
   transition: opacity 0.3s, transform 0.3s;
   pointer-events: none;
-  max-width: 180px;
-  overflow: hidden;
+  max-width: 200px;
   text-overflow: ellipsis;
+  overflow: hidden;
+  margin-bottom: 6px;
 }
 
 .buddy-bubble.visible {
   opacity: 1;
-  transform: scale(1) translateY(0);
+  transform: translateX(-50%) scale(1) translateY(0);
 }
 
 .buddy-bubble::after {
   content: '';
   position: absolute;
-  right: -6px;
-  top: 50%;
-  transform: translateY(-50%);
-  border-left: 6px solid rgba(0, 0, 0, 0.8);
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid rgba(0, 0, 0, 0.85);
 }
 
 /* ===== Pet Body — Species ===== */
@@ -523,4 +525,250 @@ html, body {
 @keyframes bossHpPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+/* ===== Panicking (dragged away from edge) ===== */
+
+.buddy-pet.panicking {
+  animation: buddyPanic 0.15s ease-in-out infinite !important;
+}
+
+.buddy-pet.panicking .buddy-eye {
+  width: 8px !important;
+  height: 8px !important;
+  background: #222;
+  animation: none !important;
+}
+
+.buddy-pet.panicking .buddy-mouth {
+  border-bottom: none;
+  border-top: 3px solid #222;
+  border-radius: 50% 50% 0 0;
+  width: 14px;
+  height: 8px;
+}
+
+@keyframes buddyPanic {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-8deg) scale(1.05, 0.95); }
+  75% { transform: rotate(8deg) scale(0.95, 1.05); }
+}
+
+/* ===== Walking ===== */
+
+#buddy-container.walking {
+  animation: none !important;
+}
+
+#buddy-container.walking .buddy-pet {
+  animation: buddyWaddle 0.4s ease-in-out infinite !important;
+}
+
+@keyframes buddyWaddle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-3px) rotate(-4deg); }
+  75% { transform: translateY(-3px) rotate(4deg); }
+}
+
+/* ===== Peeking ===== */
+
+#buddy-container.peeking .buddy-pet {
+  transition: transform 0.3s ease;
+}
+
+#buddy-container.peeking:not(.peek-out) .buddy-pet {
+  transform: scale(0.8);
+  opacity: 0.5;
+}
+
+#buddy-container.peek-out .buddy-pet {
+  transform: scale(1);
+  opacity: 1;
+  animation: buddyPeekBounce 0.5s ease !important;
+}
+
+#buddy-container.peek-hide .buddy-pet {
+  transform: scale(0.6) translateX(20px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+@keyframes buddyPeekBounce {
+  0% { transform: scale(0.7); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ===== Transitioning (climbing around corners) ===== */
+
+#buddy-container.transitioning {
+  animation: none !important;
+}
+
+#buddy-container.transitioning .buddy-pet {
+  animation: buddyCornerClimb 0.5s ease-in-out !important;
+}
+
+@keyframes buddyCornerClimb {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-20deg) scale(0.9); }
+  50% { transform: rotate(0deg) scale(0.85); }
+  75% { transform: rotate(20deg) scale(0.9); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+/* ===== Blown Away (fan speed) ===== */
+
+.buddy-pet.blown-away {
+  animation: buddyBlownAway 0.8s ease-in forwards !important;
+}
+
+.buddy-pet.blown-away .buddy-eye {
+  animation: none !important;
+  transform: scaleX(1.5) !important;
+}
+
+.buddy-pet.blown-away .buddy-mouth {
+  width: 14px;
+  height: 10px;
+  border: 2px solid #222;
+  border-radius: 50%;
+}
+
+@keyframes buddyBlownAway {
+  0% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-15deg) scale(1.1); }
+  40% { transform: rotate(25deg) scale(0.9) translateX(-20px); }
+  60% { transform: rotate(-30deg) scale(0.8) translateX(-40px); }
+  100% { transform: rotate(720deg) scale(0.5) translateX(-80px); opacity: 0; }
+}
+
+/* Crawling back */
+
+.buddy-pet.crawling-back {
+  animation: buddyCrawl 0.6s ease-in-out infinite !important;
+}
+
+@keyframes buddyCrawl {
+  0%, 100% { transform: translateY(0) scaleX(1); }
+  25% { transform: translateY(-2px) scaleX(0.95); }
+  50% { transform: translateY(0) scaleX(1.05); }
+  75% { transform: translateY(-1px) scaleX(0.98); }
+}
+
+/* ===== Windy (high fan RPM) ===== */
+
+.buddy-pet[data-reaction="windy"] .buddy-body {
+  animation: buddyFlutter 0.3s ease-in-out infinite !important;
+}
+
+.buddy-pet[data-reaction="windy"] .buddy-eye {
+  animation: none !important;
+  transform: scaleY(0.7) !important;
+}
+
+@keyframes buddyFlutter {
+  0%, 100% { transform: translateX(-50%) skewX(0deg) scaleX(1); }
+  25% { transform: translateX(-50%) skewX(-5deg) scaleX(0.95); }
+  50% { transform: translateX(-50%) skewX(3deg) scaleX(1.02); }
+  75% { transform: translateX(-50%) skewX(-3deg) scaleX(0.98); }
+}
+
+/* ===== Context Menu ===== */
+
+.buddy-context-menu {
+  background: rgba(20, 20, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  min-width: 90px;
+  animation: menuIn 0.15s ease;
+}
+
+@keyframes menuIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.buddy-context-menu button {
+  all: unset;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: #ccc;
+  border-radius: 4px;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+
+.buddy-context-menu button:hover {
+  background: rgba(247, 184, 1, 0.15);
+  color: #F7B801;
+}
+
+/* ===== Edge-specific adjustments ===== */
+
+/* Left edge: flip grip hands and bubble */
+#buddy-container[data-edge="left"] .buddy-grip {
+  right: auto;
+  left: 0;
+}
+
+#buddy-container[data-edge="left"] .grip-hand {
+  border-radius: 0 4px 4px 0;
+}
+
+#buddy-container[data-edge="left"] .buddy-bubble {
+  right: auto;
+  left: 60px;
+}
+
+#buddy-container[data-edge="left"] .buddy-bubble::after {
+  right: auto;
+  left: -6px;
+  border-left: none;
+  border-right: 6px solid rgba(0, 0, 0, 0.8);
+}
+
+/* Bottom edge: grip on bottom, pet rotated */
+#buddy-container[data-edge="bottom"] .buddy-grip {
+  bottom: 0;
+  right: 30px;
+  width: 40px;
+  height: 10px;
+  flex-direction: row;
+}
+
+#buddy-container[data-edge="bottom"] .grip-hand {
+  width: 12px;
+  height: 8px;
+  border-radius: 4px 4px 0 0;
+}
+
+#buddy-container[data-edge="bottom"] .buddy-bubble {
+  bottom: 100%;
+  left: 50%;
+}
+
+/* Top edge */
+#buddy-container[data-edge="top"] .buddy-grip {
+  bottom: auto;
+  top: 0;
+  right: 30px;
+  width: 40px;
+  height: 10px;
+  flex-direction: row;
+}
+
+#buddy-container[data-edge="top"] .grip-hand {
+  width: 12px;
+  height: 8px;
+  border-radius: 0 0 4px 4px;
 }

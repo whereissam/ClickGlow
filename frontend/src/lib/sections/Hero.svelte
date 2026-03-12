@@ -191,8 +191,8 @@
 {/if}
 
 <style>
-  .hero { position: relative; padding: 140px 0 80px; overflow: hidden; }
-  .hero-glow { position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, rgba(247,184,1,0.08) 0%, transparent 70%); pointer-events: none; }
+  .hero { position: relative; padding: 140px 0 80px; overflow: visible; }
+  .hero-glow { position: absolute; top: -200px; left: 50%; transform: translateX(-50%); width: 800px; height: 600px; background: radial-gradient(ellipse, rgba(247,184,1,0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
   .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; gap: 32px; }
   .hero-content { flex: 1; min-width: 0; }
   .badge { display: inline-block; padding: 6px 16px; background: rgba(247,184,1,0.08); border: 1px solid rgba(247,184,1,0.2); border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--accent); letter-spacing: 0.5px; margin-bottom: 24px; }
@@ -212,12 +212,12 @@
 
   /* Pet Visual — bigger, closer */
   .hero-visual { flex-shrink: 0; width: 320px; }
-  .hero-pet-scene { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .hero-pet-scene { position: relative; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 60px; }
 
   /* Speech bubble */
   .pet-quote {
     position: absolute;
-    top: -64px;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     background: rgba(247,184,1,0.12);

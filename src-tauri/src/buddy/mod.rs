@@ -8,6 +8,7 @@ pub struct SystemStats {
     pub memory_percent: f32,  // 0-100%
     pub memory_used_gb: f32,
     pub memory_total_gb: f32,
+    pub fan_rpm: f32,         // max fan RPM (0 if unavailable)
 }
 
 /// Collect current system stats (CPU, temp, memory)
@@ -30,6 +31,18 @@ pub fn get_system_stats() -> SystemStats {
         .and_then(|c| c.temperature())
         .unwrap_or(0.0);
 
+    // Fan speed — look for fan components
+    let fan_rpm = components
+        .iter()
+        .filter(|c| {
+            let label = c.label().to_lowercase();
+            label.contains("fan")
+        })
+        .filter_map(|c| c.temperature()) // sysinfo reports fan RPM as "temperature" for some components
+        .fold(0.0f32, f32::max);
+    // On macOS, also try reading via SMC if sysinfo doesn't report fans
+    let fan_rpm = if fan_rpm == 0.0 { get_fan_rpm_macos() } else { fan_rpm };
+
     // Memory
     let total = sys.total_memory() as f64;
     let used = sys.used_memory() as f64;
@@ -45,7 +58,36 @@ pub fn get_system_stats() -> SystemStats {
         memory_percent,
         memory_used_gb: (used / 1_073_741_824.0) as f32,
         memory_total_gb: (total / 1_073_741_824.0) as f32,
+        fan_rpm,
     }
+}
+
+/// Try to read fan RPM on macOS via powermetrics / ioreg fallback
+fn get_fan_rpm_macos() -> f32 {
+    #[cfg(target_os = "macos")]
+    {
+        // Use ioreg to read AppleSMC fan data
+        if let Ok(output) = std::process::Command::new("ioreg")
+            .args(["-rc", "AppleSMCKeyStore"])
+            .output()
+        {
+            let text = String::from_utf8_lossy(&output.stdout);
+            // Look for fan speed values — format varies but typically "Fan0" with RPM
+            for line in text.lines() {
+                if line.contains("FanActual") || line.contains("Fan0") {
+                    // Try to extract numeric RPM value
+                    if let Some(num) = line.split('=').last() {
+                        if let Ok(rpm) = num.trim().trim_matches('"').parse::<f32>() {
+                            if rpm > 0.0 {
+                                return rpm;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    0.0
 }
 
 /// Determine buddy reaction based on system stats
@@ -67,6 +109,22 @@ pub fn compute_reaction(stats: &SystemStats, distracted: bool) -> BuddyReaction 
         return BuddyReaction {
             state: "on_fire".to_string(),
             message: Some(format!("CPU {}°C — I'm melting!!", stats.cpu_temp as i32)),
+        };
+    }
+
+    // Fan max RPM — pet gets blown away
+    if stats.fan_rpm > 6000.0 {
+        return BuddyReaction {
+            state: "blown".to_string(),
+            message: Some(format!("Fan {}RPM — I'm flying away!!", stats.fan_rpm as i32)),
+        };
+    }
+
+    // Fan high RPM — pet flutters
+    if stats.fan_rpm > 5000.0 {
+        return BuddyReaction {
+            state: "windy".to_string(),
+            message: Some(format!("Fan {}RPM — so windy!", stats.fan_rpm as i32)),
         };
     }
 
