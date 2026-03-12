@@ -1,7 +1,7 @@
 use std::sync::atomic::Ordering;
 use tauri::State;
 
-use crate::buddy::{self, BuddyReaction, SystemStats};
+use crate::buddy::{self, BuddyReaction, ReminderCheck, ReminderConfig, ReminderState, SystemStats};
 use crate::db::queries::{self, ActivityEntry, AppUsage, DailySummary, HeatmapPoint, KeyFrequency, KeywordRule, TimeThief, WeeklyReport};
 use crate::pet::{self, PetState};
 use crate::platform;
@@ -391,6 +391,122 @@ pub fn get_weekly_time_thief(state: State<AppState>) -> Result<Option<String>, S
         }
         _ => Ok(None),
     }
+}
+
+// ===== Hydration & Break Reminders =====
+
+#[tauri::command]
+pub fn get_reminder_config(state: State<AppState>) -> ReminderConfig {
+    let conn = match state.db.conn.lock() {
+        Ok(c) => c,
+        Err(_) => return ReminderConfig::default(),
+    };
+    match queries::get_metadata(&conn, "reminder_config") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => ReminderConfig::default(),
+    }
+}
+
+#[tauri::command]
+pub fn set_reminder_config(state: State<AppState>, config: ReminderConfig) -> Result<(), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let json = serde_json::to_string(&config).map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "reminder_config", &json).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn check_reminders(state: State<AppState>) -> Result<ReminderCheck, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+
+    let config: ReminderConfig = match queries::get_metadata(&conn, "reminder_config") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => ReminderConfig::default(),
+    };
+
+    let mut reminder_state: ReminderState = match queries::get_metadata(&conn, "reminder_state") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => ReminderState::default(),
+    };
+
+    let check = buddy::check_reminders(&config, &mut reminder_state);
+
+    // Save updated state (daily reset may have happened)
+    let json = serde_json::to_string(&reminder_state).map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "reminder_state", &json).map_err(|e| e.to_string())?;
+
+    Ok(check)
+}
+
+#[tauri::command]
+pub fn acknowledge_water(state: State<AppState>) -> Result<i32, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+
+    let mut reminder_state: ReminderState = match queries::get_metadata(&conn, "reminder_state") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => ReminderState::default(),
+    };
+
+    reminder_state.last_water_ms = buddy::now_ms();
+    reminder_state.water_count_today += 1;
+    reminder_state.water_snoozed_until_ms = 0;
+
+    let json = serde_json::to_string(&reminder_state).map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "reminder_state", &json).map_err(|e| e.to_string())?;
+
+    Ok(reminder_state.water_count_today)
+}
+
+#[tauri::command]
+pub fn acknowledge_break(state: State<AppState>) -> Result<(), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+
+    let mut reminder_state: ReminderState = match queries::get_metadata(&conn, "reminder_state") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => ReminderState::default(),
+    };
+
+    reminder_state.last_break_ms = buddy::now_ms();
+    reminder_state.break_snoozed_until_ms = 0;
+
+    let json = serde_json::to_string(&reminder_state).map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "reminder_state", &json).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn snooze_reminder(state: State<AppState>, reminder_type: String, snooze_mins: i32) -> Result<(), String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+
+    let mut reminder_state: ReminderState = match queries::get_metadata(&conn, "reminder_state") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => ReminderState::default(),
+    };
+
+    let snooze_until = buddy::now_ms() + (snooze_mins as i64) * 60 * 1000;
+    match reminder_type.as_str() {
+        "water" => reminder_state.water_snoozed_until_ms = snooze_until,
+        "break" => reminder_state.break_snoozed_until_ms = snooze_until,
+        _ => return Err("Invalid reminder type".to_string()),
+    }
+
+    let json = serde_json::to_string(&reminder_state).map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "reminder_state", &json).map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_water_count(state: State<AppState>) -> i32 {
+    let conn = match state.db.conn.lock() {
+        Ok(c) => c,
+        Err(_) => return 0,
+    };
+    let reminder_state: ReminderState = match queries::get_metadata(&conn, "reminder_state") {
+        Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+        _ => return 0,
+    };
+    reminder_state.water_count_today
 }
 
 /// Get screen dimensions for buddy edge detection

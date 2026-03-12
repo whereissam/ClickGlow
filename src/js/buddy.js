@@ -57,6 +57,44 @@ function detectEdge() {
   container.setAttribute('data-edge', currentEdge);
 }
 
+// ===== Click-through on transparent areas =====
+// Make transparent areas pass-through so user can interact with windows behind
+
+let ignoring = false;
+
+async function setupClickThrough() {
+  try {
+    const { getCurrentWindow } = window.__TAURI__.window;
+    const win = getCurrentWindow();
+
+    // On macOS, setIgnoreCursorEvents with forward:true lets events pass through
+    // but the window still gets mousemove to detect when cursor enters the pet
+    const setIgnore = async (ignore) => {
+      if (ignore === ignoring) return;
+      ignoring = ignore;
+      try {
+        await win.setIgnoreCursorEvents(ignore, { forward: true });
+      } catch (_e) { /* ignore */ }
+    };
+
+    // Start ignoring by default (transparent areas pass through)
+    await setIgnore(true);
+
+    // When mouse enters interactive elements, stop ignoring
+    const interactiveEls = [buddyPet, buddyBubble, container.querySelector('.buddy-grip')];
+    for (const el of interactiveEls) {
+      if (!el) continue;
+      el.addEventListener('mouseenter', () => setIgnore(false));
+    }
+
+    // When mouse leaves the container entirely, re-enable pass-through
+    container.addEventListener('mouseleave', () => setIgnore(true));
+  } catch (_e) {
+    console.error('Click-through setup error:', _e);
+  }
+}
+setupClickThrough();
+
 // ===== Poll pet state + system stats =====
 
 async function updateBuddy() {
@@ -157,6 +195,7 @@ function showContextMenu() {
     ['Boss Fight', 'boss'],
     ['Walk', 'walk'],
     ['Peek', 'peek'],
+    ['Water Count', 'water_count'],
   ];
 
   for (const [label, action] of items) {
@@ -217,6 +256,14 @@ async function handleContextAction(action) {
       break;
     case 'peek':
       doPeek();
+      break;
+    case 'water_count':
+      try {
+        const count = await invoke('get_water_count');
+        showBubble(`You drank ${count} glasses today!`, 4000);
+      } catch (_e) {
+        showBubble('No water data yet!', 3000);
+      }
       break;
   }
 }
@@ -617,6 +664,89 @@ function startBossTick() {
 })();
 
 window.startBossFight = startBossFight;
+
+// ===== Hydration & Break Reminders =====
+
+let activeReminder = null; // "water" or "break" or null
+const reminderActions = document.getElementById('reminderActions');
+const reminderOk = document.getElementById('reminderOk');
+const reminderSnooze = document.getElementById('reminderSnooze');
+
+async function pollReminders() {
+  if (activeReminder) return; // already showing a reminder
+  try {
+    const check = await invoke('check_reminders');
+
+    if (check.water_due) {
+      activeReminder = 'water';
+      showWaterReminder(check.water_count_today);
+    } else if (check.break_due) {
+      activeReminder = 'break';
+      showBreakReminder();
+    }
+  } catch (_e) { /* ignore */ }
+}
+
+function showWaterReminder(count) {
+  buddyPet.classList.add('drinking');
+  showBubble(`Drink water! (${count} today)`, 8000);
+  reminderActions.classList.add('visible');
+
+  setTimeout(() => {
+    buddyPet.classList.remove('drinking');
+  }, 2000);
+}
+
+function showBreakReminder() {
+  buddyPet.classList.add('stretching');
+  showBubble('Time for a stretch break!', 8000);
+  reminderActions.classList.add('visible');
+
+  setTimeout(() => {
+    buddyPet.classList.remove('stretching');
+  }, 3000);
+}
+
+reminderOk.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  reminderActions.classList.remove('visible');
+
+  if (activeReminder === 'water') {
+    try {
+      const count = await invoke('acknowledge_water');
+      showBubble(`Refreshing! ${count} glasses today!`, 3000);
+      buddyPet.classList.add('celebrating');
+      setTimeout(() => buddyPet.classList.remove('celebrating'), 2000);
+    } catch (_e) { /* ignore */ }
+  } else if (activeReminder === 'break') {
+    try {
+      await invoke('acknowledge_break');
+      showBubble('Good stretch! Feel better?', 3000);
+      buddyPet.classList.add('celebrating');
+      setTimeout(() => buddyPet.classList.remove('celebrating'), 2000);
+    } catch (_e) { /* ignore */ }
+  }
+  activeReminder = null;
+});
+
+reminderSnooze.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  reminderActions.classList.remove('visible');
+
+  if (activeReminder) {
+    try {
+      await invoke('snooze_reminder', { reminderType: activeReminder, snoozeMins: 10 });
+      buddyPet.classList.add('disappointed');
+      showBubble('Fine... 10 more minutes...', 3000);
+      setTimeout(() => buddyPet.classList.remove('disappointed'), 3000);
+    } catch (_e) { /* ignore */ }
+  }
+  activeReminder = null;
+});
+
+// Poll reminders every 30 seconds
+setInterval(pollReminders, 30000);
+setTimeout(pollReminders, 15000); // first check after 15s
 
 // ===== Weekly Time Thief Notification =====
 

@@ -110,9 +110,9 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 
 - [x] Create secondary Tauri window: transparent, frameless, always-on-top, skip-taskbar
 - [x] Window size 100x140px, positioned at right screen edge
-- [ ] Click-through on transparent areas (non-pet regions)
+- [x] Click-through on transparent areas (non-pet regions) — setIgnoreCursorEvents with forward:true
 - [x] Draggable: user can reposition pet via mouse drag (buddy.js)
-- [ ] Edge snapping: pet "sticks" to nearest screen edge when released
+- [x] Edge snapping: pet "sticks" to nearest screen edge when released — snapToEdge() in buddy.js
 - [x] Toggle on/off from tray menu (`toggle_buddy` command)
 
 ### 6B: Climbing & Edge Animations - DONE
@@ -135,13 +135,13 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
   - [x] RAM > 90% → pet inflates like a balloon, looks stressed (buddyInflate animation)
 - [x] Distraction detected → pet shakes with red eyes + scolding messages ("Shouldn't you be coding?")
 
-### 6D: Hydration & Break Reminders
+### 6D: Hydration & Break Reminders - DONE
 
-- [ ] Configurable timer: remind to drink water (default every 30 min)
-- [ ] Pet holds up a water glass sign, does a drinking animation
-- [ ] Break reminder: after 1hr continuous use, pet does stretching exercise
-- [ ] Snooze button on reminder (pet looks disappointed)
-- [ ] Reminder history: "You drank 8 glasses today!"
+- [x] Configurable timer: remind to drink water (default every 30 min) — ReminderConfig stored in metadata
+- [x] Pet holds up a water glass sign, does a drinking animation — CSS glass + drain + tilt animation
+- [x] Break reminder: after 1hr continuous use, pet does stretching exercise — buddyStretch keyframes
+- [x] Snooze button on reminder (pet looks disappointed) — 10min snooze + disappointed face
+- [x] Reminder history: "You drank 8 glasses today!" — water_count_today in context menu
 
 ### 6E: Fun Interactions - DONE
 

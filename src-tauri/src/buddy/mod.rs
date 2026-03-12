@@ -224,6 +224,98 @@ impl Default for BossFight {
     }
 }
 
+/// Hydration & break reminder configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReminderConfig {
+    pub water_enabled: bool,
+    pub water_interval_mins: i32,     // default 30
+    pub break_enabled: bool,
+    pub break_interval_mins: i32,     // default 60
+}
+
+impl Default for ReminderConfig {
+    fn default() -> Self {
+        Self {
+            water_enabled: true,
+            water_interval_mins: 30,
+            break_enabled: true,
+            break_interval_mins: 60,
+        }
+    }
+}
+
+/// Hydration & break reminder state
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReminderState {
+    pub last_water_ms: i64,
+    pub last_break_ms: i64,
+    pub water_count_today: i32,
+    pub today_date: String,          // "YYYY-MM-DD" to reset daily
+    pub water_snoozed_until_ms: i64, // 0 = not snoozed
+    pub break_snoozed_until_ms: i64,
+}
+
+impl Default for ReminderState {
+    fn default() -> Self {
+        let now = now_ms();
+        Self {
+            last_water_ms: now,
+            last_break_ms: now,
+            water_count_today: 0,
+            today_date: today_str(),
+            water_snoozed_until_ms: 0,
+            break_snoozed_until_ms: 0,
+        }
+    }
+}
+
+pub fn now_ms() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as i64
+}
+
+fn today_str() -> String {
+    let secs = now_ms() / 1000;
+    let days = secs / 86400;
+    // Simple date calc (good enough for daily reset)
+    format!("day-{}", days)
+}
+
+/// Check which reminders are due
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReminderCheck {
+    pub water_due: bool,
+    pub break_due: bool,
+    pub water_count_today: i32,
+}
+
+pub fn check_reminders(config: &ReminderConfig, state: &mut ReminderState) -> ReminderCheck {
+    let now = now_ms();
+    let today = today_str();
+
+    // Reset daily counter
+    if state.today_date != today {
+        state.water_count_today = 0;
+        state.today_date = today;
+    }
+
+    let water_due = config.water_enabled
+        && now - state.last_water_ms >= (config.water_interval_mins as i64) * 60 * 1000
+        && (state.water_snoozed_until_ms == 0 || now >= state.water_snoozed_until_ms);
+
+    let break_due = config.break_enabled
+        && now - state.last_break_ms >= (config.break_interval_mins as i64) * 60 * 1000
+        && (state.break_snoozed_until_ms == 0 || now >= state.break_snoozed_until_ms);
+
+    ReminderCheck {
+        water_due,
+        break_due,
+        water_count_today: state.water_count_today,
+    }
+}
+
 impl BossFight {
     pub fn start(&mut self) {
         self.active = true;

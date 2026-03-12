@@ -87,6 +87,13 @@ fn main() {
             commands::get_boss_fight,
             commands::tick_boss_fight,
             commands::get_weekly_time_thief,
+            commands::get_reminder_config,
+            commands::set_reminder_config,
+            commands::check_reminders,
+            commands::acknowledge_water,
+            commands::acknowledge_break,
+            commands::snooze_reminder,
+            commands::get_water_count,
         ])
         .setup(move |app| {
             // Create buddy floating window
