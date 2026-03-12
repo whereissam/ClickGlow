@@ -1,9 +1,11 @@
 use rdev::{Event, EventType, Key, Button};
 use std::sync::mpsc::Sender;
 use std::sync::atomic::{AtomicBool, AtomicI64, AtomicU8, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
+use crate::apm::ApmTracker;
+use crate::panic::PanicTracker;
 use crate::state::{STATUS_RUNNING, STATUS_ERROR};
 
 #[derive(Debug, Clone, Copy)]
@@ -79,6 +81,8 @@ pub fn start_listener(
     tx: Sender<InputEvent>,
     paused: Arc<AtomicBool>,
     listener_status: Arc<AtomicU8>,
+    apm: Arc<Mutex<ApmTracker>>,
+    panic_tracker: Arc<Mutex<PanicTracker>>,
 ) {
     std::thread::spawn(move || {
         listener_status.store(STATUS_RUNNING, Ordering::Relaxed);
@@ -127,6 +131,12 @@ pub fn start_listener(
                 EventType::ButtonPress(button) => {
                     let x = f64::from_bits(LAST_MOUSE_X.load(Ordering::Relaxed) as u64);
                     let y = f64::from_bits(LAST_MOUSE_Y.load(Ordering::Relaxed) as u64);
+
+                    // APM: count clicks
+                    if let Ok(mut apm) = apm.lock() {
+                        apm.record_action();
+                    }
+
                     Some(InputEvent::MouseClick {
                         x, y,
                         button: button_to_enum(button),
@@ -136,10 +146,30 @@ pub fn start_listener(
                     })
                 }
                 EventType::KeyPress(key) => {
+                    let key_code = key_to_string(key);
+
+                    // APM: count keystrokes
+                    if let Ok(mut apm) = apm.lock() {
+                        apm.record_action();
+                    }
+
+                    // Panic detection
+                    if let Ok(mut panic) = panic_tracker.lock() {
+                        panic.on_key(&key_code);
+                    }
+
                     Some(InputEvent::KeyPress {
-                        key_code: key_to_string(key),
+                        key_code,
                         timestamp: ts,
                     })
+                }
+                EventType::KeyRelease(key) => {
+                    let key_code = key_to_string(key);
+                    // Track modifier releases for panic detection
+                    if let Ok(mut panic) = panic_tracker.lock() {
+                        panic.on_key_release(&key_code);
+                    }
+                    None
                 }
                 _ => None,
             };

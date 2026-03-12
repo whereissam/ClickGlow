@@ -6,9 +6,11 @@ use std::sync::Arc;
 
 use tauri::Manager;
 
+use clickglow::apm::ApmTracker;
 use clickglow::commands;
 use clickglow::db::connection::Database;
 use clickglow::input::{buffer, listener};
+use clickglow::panic::PanicTracker;
 use clickglow::reporting;
 use clickglow::state::AppState;
 use clickglow::tracking;
@@ -21,11 +23,19 @@ fn main() {
     let paused = Arc::new(AtomicBool::new(false));
     let listener_status = Arc::new(AtomicU8::new(0));
     let distracted = Arc::new(AtomicBool::new(false));
+    let apm = Arc::new(ApmTracker::new());
+    let panic_tracker = Arc::new(PanicTracker::new());
 
     // Start input listener -> buffer -> DB pipeline
     // Dropping `tx` on shutdown will cause the buffer thread to flush and exit
     let (tx, rx) = std::sync::mpsc::channel();
-    listener::start_listener(tx, paused.clone(), listener_status.clone());
+    listener::start_listener(
+        tx,
+        paused.clone(),
+        listener_status.clone(),
+        apm.clone(),
+        panic_tracker.clone(),
+    );
     buffer::start_buffer(rx, db.clone());
     reporting::start_scheduler(db.clone());
     tracking::start_tracker(db.clone(), paused.clone(), distracted.clone());
@@ -35,6 +45,8 @@ fn main() {
         paused: paused.clone(),
         listener_status: listener_status.clone(),
         distracted: distracted.clone(),
+        apm: apm.clone(),
+        panic_tracker: panic_tracker.clone(),
     };
 
     tauri::Builder::default()
@@ -95,6 +107,8 @@ fn main() {
             commands::snooze_reminder,
             commands::get_water_count,
             commands::get_distance_stats,
+            commands::get_apm_stats,
+            commands::get_panic_stats,
         ])
         .setup(move |app| {
             // Create buddy floating window

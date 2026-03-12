@@ -1,7 +1,9 @@
 use std::sync::atomic::Ordering;
 use tauri::State;
 
+use crate::apm::ApmStats;
 use crate::buddy::{self, BuddyReaction, ReminderCheck, ReminderConfig, ReminderState, SystemStats};
+use crate::panic::PanicStats;
 use crate::db::queries::{self, ActivityEntry, AppUsage, DailySummary, DistanceStats, HeatmapPoint, KeyFrequency, KeywordRule, TimeThief, WeeklyReport};
 use crate::pet::{self, PetState};
 use crate::platform;
@@ -507,6 +509,39 @@ pub fn get_water_count(state: State<AppState>) -> i32 {
         _ => return 0,
     };
     reminder_state.water_count_today
+}
+
+// ===== APM & Panic =====
+
+#[tauri::command]
+pub fn get_apm_stats(state: State<AppState>) -> ApmStats {
+    match state.apm.lock() {
+        Ok(apm) => apm.get_stats(),
+        Err(_) => ApmStats {
+            current_apm: 0,
+            in_flow: false,
+            flow_duration_ms: 0,
+            flow_level: 0,
+            daily_high: 0,
+            alltime_high: 0,
+            history: vec![],
+        },
+    }
+}
+
+#[tauri::command]
+pub fn get_panic_stats(state: State<AppState>) -> PanicStats {
+    match state.panic_tracker.lock() {
+        Ok(panic) => panic.get_stats(),
+        Err(_) => PanicStats {
+            in_panic: false,
+            total_panics: 0,
+            weekly_panics: 0,
+            weekly_score: 0,
+            recent_events: vec![],
+            stealth_master: true,
+        },
+    }
 }
 
 // ===== Mouse Odometer =====

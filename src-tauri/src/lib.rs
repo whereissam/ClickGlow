@@ -1,7 +1,9 @@
+pub mod apm;
 pub mod buddy;
 pub mod commands;
 pub mod db;
 pub mod input;
+pub mod panic;
 pub mod pet;
 pub mod platform;
 pub mod reporting;

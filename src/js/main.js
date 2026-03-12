@@ -8,6 +8,8 @@ import { loadActivityLog } from './activity-log.js';
 import { loadSettings, initOnboarding } from './settings.js';
 import { loadOdometer } from './odometer.js';
 import { loadKeyboardWear } from './keyboard-wear.js';
+import { startApmPoll, stopApmPoll } from './apm.js';
+import { startPanicPoll, stopPanicPoll } from './panic-index.js';
 import { resizeAllCharts } from './charts.js';
 
 // Register tab loaders
@@ -16,16 +18,40 @@ registerTabLoader('dashboard', () => {
   loadHeatmap();
   loadKeyboardChart();
   loadOdometer();
+  startApmPoll();
+  startPanicPoll();
 });
 registerTabLoader('keyboard', () => {
   loadKeyboardChart();
   loadKeyboardWear();
+  stopApmPoll();
+  stopPanicPoll();
 });
-registerTabLoader('pet', loadPetPanel);
-registerTabLoader('apps', loadAppsPanel);
-registerTabLoader('weekly', loadWeeklyPanel);
-registerTabLoader('activity', loadActivityLog);
-registerTabLoader('settings', loadSettings);
+registerTabLoader('pet', () => {
+  loadPetPanel();
+  stopApmPoll();
+  stopPanicPoll();
+});
+registerTabLoader('apps', () => {
+  loadAppsPanel();
+  stopApmPoll();
+  stopPanicPoll();
+});
+registerTabLoader('weekly', () => {
+  loadWeeklyPanel();
+  stopApmPoll();
+  stopPanicPoll();
+});
+registerTabLoader('activity', () => {
+  loadActivityLog();
+  stopApmPoll();
+  stopPanicPoll();
+});
+registerTabLoader('settings', () => {
+  loadSettings();
+  stopApmPoll();
+  stopPanicPoll();
+});
 
 // When time range changes, reload active dashboard
 setOnTimeRangeChange(() => {
@@ -45,6 +71,8 @@ window.addEventListener('DOMContentLoaded', () => {
   loadHeatmap();
   loadKeyboardChart();
   loadOdometer();
+  startApmPoll();
+  startPanicPoll();
   updateStatus();
   checkAccessibility();
   setInterval(updateStatus, 5000);

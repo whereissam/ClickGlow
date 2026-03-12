@@ -175,19 +175,19 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 
 ### 7C: APM (Actions Per Minute) Flow Mode
 
-- [ ] Real-time APM counter (clicks + keystrokes per minute)
-- [ ] Flow state detection: sustained high APM (>100) for 5+ minutes
-- [ ] Visual effects when in flow: screen edge glow / fire effect / "ULTRA COMBO"
-- [ ] APM history chart: see when you hit peak performance
-- [ ] Daily high score + all-time record
+- [x] Real-time APM counter (clicks + keystrokes per minute)
+- [x] Flow state detection: sustained high APM (>100) for 5+ minutes
+- [x] Visual effects when in flow: screen edge glow / fire effect / "ULTRA COMBO"
+- [x] APM history chart: see when you hit peak performance
+- [x] Daily high score + all-time record
 
 ### 7D: Boss Panic Index
 
-- [ ] Detect rapid Alt+Tab / Cmd+Tab sequences (>3 switches in 2 seconds)
-- [ ] Detect panic key combos: rapid Esc, Cmd+W, Cmd+H
-- [ ] "Panic score" per incident, weekly panic report
+- [x] Detect rapid Alt+Tab / Cmd+Tab sequences (>3 switches in 2 seconds)
+- [x] Detect panic key combos: rapid Esc, Cmd+W, Cmd+H
+- [x] "Panic score" per incident, weekly panic report
 - [ ] Pet reacts: ducks and hides when you panic-switch
-- [ ] Achievement: "Stealth Master — 0 panic switches this week"
+- [x] Achievement: "Stealth Master — 0 panic switches this week"
 
 ---
 
