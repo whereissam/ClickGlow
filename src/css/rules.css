@@ -1,0 +1,187 @@
+/* Pet Rules Strip */
+.pet-rules-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.pet-rule-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.pet-rule-chip.good { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+.pet-rule-chip.good .chip-icon { background: rgba(74, 222, 128, 0.25); }
+.pet-rule-chip.bad { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+.pet-rule-chip.bad .chip-icon { background: rgba(248, 113, 113, 0.25); }
+.pet-rule-chip.evolve { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+.pet-rule-chip.evolve .chip-icon { background: rgba(168, 85, 247, 0.25); }
+.pet-rule-chip.mood { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+.pet-rule-chip.mood .chip-icon { background: rgba(251, 191, 36, 0.25); }
+.pet-rule-chip.info { background: rgba(148, 163, 184, 0.1); color: #94a3b8; cursor: pointer; }
+.pet-rule-chip.info .chip-icon { background: rgba(148, 163, 184, 0.25); }
+.pet-rule-chip.info:hover { background: rgba(148, 163, 184, 0.2); }
+
+/* Rule Editor */
+.rule-editor-section {
+  margin-bottom: 12px;
+}
+
+.rule-editor-section h4 {
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.rule-row .rule-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.rule-row select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+}
+
+.rule-row .rule-delete {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.rule-row .rule-delete:hover {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.rule-add-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.rule-input {
+  flex: 1;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 0.75rem;
+}
+
+.rule-select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 0.7rem;
+}
+
+/* Gamification Rules */
+.rules-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+.rules-card h3 {
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+}
+
+.rule-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.rule-good .rule-icon { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+.rule-bad .rule-icon { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+.rule-evolve .rule-icon { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+.rule-mood .rule-icon { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+.rule-streak .rule-icon { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+
+.rule-text strong {
+  display: block;
+  font-size: 0.75rem;
+  margin-bottom: 2px;
+}
+
+.rule-text span {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}

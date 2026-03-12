@@ -1,0 +1,118 @@
+/* Panel header actions */
+.panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Weekly Report */
+.week-select {
+  padding: 6px 10px;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.btn-small {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  color: #1E1F24;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Space Grotesk', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-small:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.weekly-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.weekly-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 300px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.weekly-empty p {
+  font-size: 14px;
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+.weekly-hint {
+  font-size: 12px !important;
+  color: var(--text-muted) !important;
+}
+
+.weekly-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.weekly-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.weekly-stat .stat-value {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.weekly-stat .stat-label {
+  font-size: 11px;
+}
+
+.weekly-avg {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.weekly-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.weekly-chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.weekly-chart-card h4 {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+#weeklyHourlyChart,
+#weeklyKeysChart {
+  height: 260px;
+}

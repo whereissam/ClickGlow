@@ -1,0 +1,58 @@
+/* Activity Log */
+.activity-log-table {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+}
+
+.log-header {
+  display: grid;
+  grid-template-columns: 80px 120px 1fr 90px 70px;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.log-entries {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: 80px 120px 1fr 90px 70px;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  align-items: center;
+}
+
+.log-entry:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.log-col-time { color: var(--text-secondary); }
+.log-col-app { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-col-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
+.log-col-dur { text-align: right; font-variant-numeric: tabular-nums; }
+
+.log-cat {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.log-cat.productive { background: rgba(74, 222, 128, 0.15); color: #4ade80; }
+.log-cat.neutral { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+.log-cat.distraction { background: rgba(248, 113, 113, 0.15); color: #f87171; }

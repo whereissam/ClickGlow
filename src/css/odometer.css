@@ -1,0 +1,168 @@
+/* ===== Mouse Odometer ===== */
+
+.odometer-section {
+  margin-bottom: 8px;
+  flex: none;
+  overflow: visible;
+}
+
+.odometer-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.odometer-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.odometer-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  text-align: center;
+}
+
+.odometer-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.odometer-value {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.odometer-pixels {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.odometer-comparison {
+  background: linear-gradient(135deg, rgba(247, 184, 1, 0.08), rgba(255, 107, 53, 0.06));
+  border: 1px solid rgba(247, 184, 1, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.odometer-badges {
+  margin-bottom: 12px;
+}
+
+.odometer-badges-title {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.odometer-badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.odometer-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.odometer-badge.earned {
+  background: rgba(247, 184, 1, 0.12);
+  border: 1px solid rgba(247, 184, 1, 0.25);
+  color: var(--accent);
+}
+
+.odometer-badge.locked {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  gap: 4px;
+  padding: 6px 10px;
+}
+
+.badge-icon {
+  font-size: 13px;
+}
+
+.badge-name {
+  font-size: 11px;
+}
+
+.badge-progress {
+  width: 60px;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.badge-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.odometer-history {
+  margin-top: 4px;
+}
+
+.odometer-history-title {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.odometer-bars {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 80px;
+  padding-bottom: 18px;
+}
+
+.odometer-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.odometer-bar {
+  width: 100%;
+  max-width: 32px;
+  background: linear-gradient(180deg, var(--accent), rgba(247, 184, 1, 0.3));
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s;
+}
+
+.odometer-bar-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  white-space: nowrap;
+}

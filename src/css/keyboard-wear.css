@@ -1,0 +1,193 @@
+/* ===== Keyboard Wear Simulator ===== */
+
+.keyboard-wear-section {
+  flex: none;
+  margin-bottom: 16px;
+}
+
+.keyboard-wear-section h3 {
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.wear-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+}
+
+.wear-row {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+}
+
+.wear-key {
+  --key-w: 1;
+  width: calc(var(--key-w) * 42px);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'Space Grotesk', monospace;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s;
+  cursor: default;
+}
+
+.wear-key::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--heat-color, transparent);
+  border-radius: inherit;
+  z-index: 0;
+}
+
+.wear-key-label {
+  position: relative;
+  z-index: 1;
+}
+
+/* Wear stages */
+.wear-pristine {
+  background: #2A2D34;
+  border: 1px solid #3a3d46;
+  color: var(--text);
+}
+
+.wear-faded {
+  background: #2A2D34;
+  border: 1px solid #3a3d46;
+  color: var(--text-dim);
+}
+.wear-faded .wear-key-label {
+  opacity: 0.7;
+}
+
+.wear-cracked {
+  background: #252830;
+  border: 1px solid #4a4530;
+  color: var(--text-dim);
+}
+.wear-cracked .wear-key-label {
+  opacity: 0.55;
+}
+
+.wear-hole {
+  background: #1E1F24;
+  border: 1px solid #5a3a20;
+  color: var(--text-muted);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+}
+.wear-hole .wear-key-label {
+  opacity: 0.35;
+}
+
+.wear-missing {
+  background: #161720;
+  border: 1px dashed #4a2020;
+  color: transparent;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.6);
+}
+.wear-missing .wear-key-label {
+  visibility: hidden;
+}
+
+/* Wear legend */
+.wear-legend {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.wear-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.wear-legend-swatch {
+  width: 18px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.wear-legend-swatch.wear-pristine {
+  background: #2A2D34;
+  border: 1px solid #3a3d46;
+}
+.wear-legend-swatch.wear-faded {
+  background: rgba(91, 140, 255, 0.2);
+  border: 1px solid rgba(91, 140, 255, 0.3);
+}
+.wear-legend-swatch.wear-cracked {
+  background: rgba(247, 184, 1, 0.25);
+  border: 1px solid rgba(247, 184, 1, 0.3);
+}
+.wear-legend-swatch.wear-hole {
+  background: rgba(255, 107, 53, 0.3);
+  border: 1px solid rgba(255, 107, 53, 0.4);
+}
+.wear-legend-swatch.wear-missing {
+  background: #161720;
+  border: 1px dashed #4a2020;
+}
+
+/* Fun stat */
+.wear-fun-stat {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(247, 184, 1, 0.06), rgba(255, 107, 53, 0.04));
+  border: 1px solid rgba(247, 184, 1, 0.12);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+}
+
+.wear-stats-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.wear-stat-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  min-width: 64px;
+}
+
+.wear-stat-key {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wear-stat-count {
+  font-size: 10px;
+  color: var(--text-dim);
+}

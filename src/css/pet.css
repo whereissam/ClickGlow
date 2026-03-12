@@ -1,0 +1,400 @@
+/* ===== Focus Pet ===== */
+.pet-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex: 1;
+  min-height: 0;
+}
+
+.pet-scene {
+  position: relative;
+  width: 180px;
+  min-width: 180px;
+  height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.pet-ground {
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  border-radius: 2px;
+}
+
+.pet-name-tag {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+/* Pet creature (CSS-only animated) */
+.pet-creature {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.pet-creature:hover {
+  transform: scale(1.05);
+}
+
+.pet-creature:active {
+  animation: petBounce 0.4s ease;
+}
+
+@keyframes petBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-16px) scale(1.1, 0.9); }
+  60% { transform: translateY(-4px) scale(0.95, 1.05); }
+}
+
+/* Slime */
+.pet-creature[data-species="slime"] .pet-body {
+  width: 64px;
+  height: 48px;
+  background: linear-gradient(180deg, #7ED957, #4CAF50);
+  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  box-shadow: 0 4px 12px rgba(126,217,87,0.3);
+  animation: slimeIdle 2s ease-in-out infinite;
+}
+
+@keyframes slimeIdle {
+  0%, 100% { transform: scaleY(1) scaleX(1); }
+  50% { transform: scaleY(0.92) scaleX(1.06); }
+}
+
+/* Dragon */
+.pet-creature[data-species="dragon"] .pet-body {
+  width: 72px;
+  height: 56px;
+  background: linear-gradient(180deg, #FF6B35, #E53E3E);
+  border-radius: 40% 40% 50% 50% / 50% 50% 40% 40%;
+  box-shadow: 0 4px 16px rgba(255,107,53,0.3);
+  animation: dragonIdle 1.5s ease-in-out infinite;
+}
+
+.pet-creature[data-species="dragon"] .pet-body::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid #FF6B35;
+}
+
+.pet-creature[data-species="dragon"] .pet-body::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 12px solid #FF6B35;
+}
+
+@keyframes dragonIdle {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.04) scaleX(0.97); }
+}
+
+/* Wizard */
+.pet-creature[data-species="wizard"] .pet-body {
+  width: 64px;
+  height: 56px;
+  background: linear-gradient(180deg, #B388FF, #7C4DFF);
+  border-radius: 35% 35% 50% 50% / 45% 45% 40% 40%;
+  box-shadow: 0 4px 20px rgba(179,136,255,0.4);
+  animation: wizardFloat 3s ease-in-out infinite;
+}
+
+.pet-creature[data-species="wizard"] .pet-body::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 24px solid #9C27B0;
+}
+
+.pet-creature[data-species="wizard"] .pet-body::after {
+  content: '';
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #F7B801;
+  box-shadow: 0 0 8px #F7B801;
+}
+
+@keyframes wizardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Eyes */
+.pet-eyes {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+}
+
+.pet-eye {
+  width: 8px;
+  height: 10px;
+  background: #1E1F24;
+  border-radius: 50%;
+  display: block;
+  animation: blink 4s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+.pet-mouth {
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 5px;
+  border-bottom: 2px solid #1E1F24;
+  border-radius: 0 0 50% 50%;
+}
+
+/* Mood states */
+.pet-creature[data-mood="happy"] .pet-mouth {
+  width: 14px;
+  height: 7px;
+}
+
+.pet-creature[data-mood="happy"] .pet-body {
+  filter: brightness(1.1);
+}
+
+.pet-creature[data-mood="angry"] .pet-eye {
+  background: #FF5252;
+  animation: none;
+}
+
+.pet-creature[data-mood="angry"] .pet-mouth {
+  border-bottom: none;
+  border-top: 2px solid #FF5252;
+  border-radius: 50% 50% 0 0;
+}
+
+.pet-creature[data-mood="angry"] .pet-body {
+  animation-duration: 0.5s !important;
+}
+
+/* Distraction mode: pet scene shakes and glows red */
+.pet-scene.distracted {
+  animation: distractionShake 0.3s ease-in-out infinite;
+}
+
+.pet-scene.distracted .pet-creature .pet-body {
+  filter: hue-rotate(-30deg) saturate(2) brightness(0.9);
+  box-shadow: 0 0 20px rgba(255, 50, 50, 0.6), 0 0 40px rgba(255, 50, 50, 0.3);
+}
+
+@keyframes distractionShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px) rotate(-1deg); }
+  75% { transform: translateX(3px) rotate(1deg); }
+}
+
+.pet-warning {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 10;
+  animation: warningPulse 1s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(255, 0, 0, 0.4);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes warningPulse {
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+}
+
+.pet-creature[data-mood="sleeping"] .pet-eye {
+  height: 2px;
+  animation: none;
+}
+
+.pet-creature[data-mood="sleeping"] .pet-mouth {
+  display: none;
+}
+
+.pet-creature[data-mood="sleeping"] .pet-body {
+  opacity: 0.7;
+  filter: grayscale(0.3);
+}
+
+/* Pet info */
+.pet-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pet-stats-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pet-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  text-align: center;
+}
+
+.pet-stat-card.wide {
+  grid-column: span 2;
+}
+
+.pet-stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.pet-hp-bar, .pet-xp-bar {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.pet-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FF5252, #7ED957);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.pet-xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.pet-stat-num {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pet-level {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.pet-species {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: capitalize;
+}
+
+.pet-streak {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.pet-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.pomodoro-display {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.pomodoro-duration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pomodoro-duration label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pomodoro-duration select {
+  padding: 4px 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.pomodoro-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-small.secondary {
+  background: var(--bg-hover);
+  color: var(--text-dim);
+}
+
+.btn-small.secondary:hover {
+  background: var(--border);
+  color: var(--text);
+  filter: none;
+  transform: none;
+}
