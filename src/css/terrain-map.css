@@ -1,0 +1,43 @@
+/* 3D Terrain Map */
+.terrain-container {
+  width: 100%;
+  height: calc(100vh - 200px);
+  min-height: 400px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #0a0a0f;
+  position: relative;
+  overflow: hidden;
+}
+
+.terrain-container canvas {
+  border-radius: var(--radius);
+}
+
+.terrain-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.terrain-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.terrain-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.terrain-legend-trail {
+  color: #5B8CFF;
+  font-style: italic;
+  margin-left: auto;
+}

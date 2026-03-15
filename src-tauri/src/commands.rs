@@ -185,6 +185,38 @@ fn base64_decode(input: &str) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 
+// ===== Phase 8: Generative Art & Advanced Viz =====
+
+#[tauri::command]
+pub fn get_mouse_trajectory(
+    state: State<AppState>,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<queries::TrajectoryPoint>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_mouse_trajectory(&conn, start_ms, end_ms).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_hourly_heatmaps(
+    state: State<AppState>,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<queries::HourlyHeatmap>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_hourly_heatmaps(&conn, start_ms, end_ms).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_terrain_data(
+    state: State<AppState>,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<queries::TerrainPoint>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    queries::get_terrain_data(&conn, start_ms, end_ms).map_err(|e| e.to_string())
+}
+
 // ===== App Tracking =====
 
 #[tauri::command]

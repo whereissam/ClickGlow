@@ -1,0 +1,32 @@
+/* Trail Art */
+.trail-art-canvas {
+  width: 100%;
+  height: calc(100vh - 200px);
+  min-height: 400px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #0a0a0f;
+  display: block;
+}
+
+.trail-art-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.trail-art-date {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.trail-art-points {
+  padding: 2px 10px;
+  background: rgba(247,184,1,0.08);
+  border-radius: 12px;
+  color: var(--accent);
+  font-weight: 600;
+}

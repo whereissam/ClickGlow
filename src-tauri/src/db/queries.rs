@@ -733,6 +733,145 @@ fn pixels_to_meters(pixels: f64, dpi: f64) -> f64 {
     (pixels / dpi) * 0.0254
 }
 
+// ===== Phase 8: Generative Art & Advanced Viz =====
+
+#[derive(Debug, Serialize)]
+pub struct TrajectoryPoint {
+    pub x: f64,
+    pub y: f64,
+    pub t: i64,
+    pub event_type: i32,
+}
+
+/// Get raw mouse trajectory (ordered by time) for trail art generation.
+/// Downsamples to max ~5000 points for performance.
+pub fn get_mouse_trajectory(
+    conn: &Connection,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<TrajectoryPoint>, rusqlite::Error> {
+    let count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM mouse_events WHERE created_at >= ?1 AND created_at <= ?2",
+        rusqlite::params![start_ms, end_ms],
+        |row| row.get(0),
+    )?;
+
+    // Downsample: pick every Nth row to keep ~5000 points
+    let step = std::cmp::max(1, count / 5000);
+
+    let sql = format!(
+        "SELECT x, y, created_at, event_type FROM (
+           SELECT x, y, created_at, event_type, ROW_NUMBER() OVER (ORDER BY created_at) AS rn
+           FROM mouse_events
+           WHERE created_at >= ?1 AND created_at <= ?2
+         ) WHERE rn % {} = 0 ORDER BY created_at",
+        step
+    );
+
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(rusqlite::params![start_ms, end_ms], |row| {
+        Ok(TrajectoryPoint {
+            x: row.get(0)?,
+            y: row.get(1)?,
+            t: row.get(2)?,
+            event_type: row.get(3)?,
+        })
+    })?;
+    rows.collect()
+}
+
+/// Get heatmap data bucketed by hour for time-lapse replay.
+/// Returns a Vec of (hour_offset, points) where hour_offset is 0..N hours from start.
+#[derive(Debug, Serialize)]
+pub struct HourlyHeatmap {
+    pub hour_label: String,
+    pub hour_ms: i64,
+    pub points: Vec<HeatmapPoint>,
+}
+
+pub fn get_hourly_heatmaps(
+    conn: &Connection,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<HourlyHeatmap>, rusqlite::Error> {
+    // Bucket events by hour, then aggregate within each hour
+    let sql = "SELECT
+        CAST((created_at - ?1) / 3600000 AS INTEGER) as hour_bucket,
+        CAST(x/10 AS INTEGER)*10 as bx,
+        CAST(y/10 AS INTEGER)*10 as by,
+        COUNT(*) as cnt
+       FROM mouse_events
+       WHERE created_at >= ?1 AND created_at <= ?2
+       GROUP BY hour_bucket, bx, by
+       ORDER BY hour_bucket";
+
+    let mut stmt = conn.prepare(sql)?;
+    let rows = stmt.query_map(rusqlite::params![start_ms, end_ms], |row| {
+        Ok((
+            row.get::<_, i64>(0)?,
+            row.get::<_, f64>(1)?,
+            row.get::<_, f64>(2)?,
+            row.get::<_, u32>(3)?,
+        ))
+    })?;
+
+    let mut buckets: std::collections::BTreeMap<i64, Vec<HeatmapPoint>> = std::collections::BTreeMap::new();
+    for row in rows {
+        let (bucket, x, y, value) = row?;
+        buckets.entry(bucket).or_default().push(HeatmapPoint { x, y, value });
+    }
+
+    let result: Vec<HourlyHeatmap> = buckets
+        .into_iter()
+        .map(|(bucket, points)| {
+            let hour_ms = start_ms + bucket * 3600000;
+            // Format as HH:00
+            let total_secs = (hour_ms / 1000) % 86400;
+            let h = (total_secs / 3600) % 24;
+            let hour_label = format!("{:02}:00", h);
+            HourlyHeatmap { hour_label, hour_ms, points }
+        })
+        .collect();
+
+    Ok(result)
+}
+
+/// Get click density on a grid for 3D terrain map.
+/// Uses a coarser grid (20px) for the terrain heightmap.
+#[derive(Debug, Serialize)]
+pub struct TerrainPoint {
+    pub x: f64,
+    pub y: f64,
+    pub clicks: u32,
+    pub moves: u32,
+}
+
+pub fn get_terrain_data(
+    conn: &Connection,
+    start_ms: i64,
+    end_ms: i64,
+) -> Result<Vec<TerrainPoint>, rusqlite::Error> {
+    let sql = "SELECT
+        CAST(x/20 AS INTEGER)*20 as bx,
+        CAST(y/20 AS INTEGER)*20 as by,
+        SUM(CASE WHEN event_type > 0 THEN 1 ELSE 0 END) as click_cnt,
+        SUM(CASE WHEN event_type = 0 THEN 1 ELSE 0 END) as move_cnt
+       FROM mouse_events
+       WHERE created_at >= ?1 AND created_at <= ?2
+       GROUP BY bx, by";
+
+    let mut stmt = conn.prepare(sql)?;
+    let rows = stmt.query_map(rusqlite::params![start_ms, end_ms], |row| {
+        Ok(TerrainPoint {
+            x: row.get(0)?,
+            y: row.get(1)?,
+            clicks: row.get(2)?,
+            moves: row.get(3)?,
+        })
+    })?;
+    rows.collect()
+}
+
 /// Get distraction time in the last N minutes (for pet damage calculation)
 pub fn get_recent_distraction_ms(conn: &Connection, since_ms: i64) -> Result<i64, rusqlite::Error> {
     conn.query_row(

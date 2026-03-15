@@ -1,0 +1,59 @@
+/* Heatmap Replay */
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.replay-slider-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.replay-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--surface);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.replay-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  cursor: grab;
+  box-shadow: 0 0 8px rgba(247,184,1,0.4);
+}
+
+.replay-time-label {
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.replay-hour-display {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.replay-heatmap-container {
+  width: 100%;
+  height: calc(100vh - 240px);
+  min-height: 350px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #0a0a0f;
+  position: relative;
+}

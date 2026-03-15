@@ -109,6 +109,9 @@ fn main() {
             commands::get_distance_stats,
             commands::get_apm_stats,
             commands::get_panic_stats,
+            commands::get_mouse_trajectory,
+            commands::get_hourly_heatmaps,
+            commands::get_terrain_data,
         ])
         .setup(move |app| {
             // Create buddy floating window

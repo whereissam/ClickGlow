@@ -11,6 +11,9 @@ import { loadKeyboardWear } from './keyboard-wear.js';
 import { startApmPoll, stopApmPoll } from './apm.js';
 import { startPanicPoll, stopPanicPoll } from './panic-index.js';
 import { resizeAllCharts } from './charts.js';
+import { loadTrailArt } from './trail-art.js';
+import { loadReplay } from './heatmap-replay.js';
+import { loadTerrain, stopTerrainAnimation } from './terrain-map.js';
 
 // Register tab loaders
 registerTabLoader('dashboard', () => {
@@ -47,10 +50,28 @@ registerTabLoader('activity', () => {
   stopApmPoll();
   stopPanicPoll();
 });
+registerTabLoader('trail-art', () => {
+  loadTrailArt();
+  stopApmPoll();
+  stopPanicPoll();
+  stopTerrainAnimation();
+});
+registerTabLoader('replay', () => {
+  loadReplay();
+  stopApmPoll();
+  stopPanicPoll();
+  stopTerrainAnimation();
+});
+registerTabLoader('terrain', () => {
+  loadTerrain();
+  stopApmPoll();
+  stopPanicPoll();
+});
 registerTabLoader('settings', () => {
   loadSettings();
   stopApmPoll();
   stopPanicPoll();
+  stopTerrainAnimation();
 });
 
 // When time range changes, reload active dashboard
