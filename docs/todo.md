@@ -245,5 +245,5 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 - [x] Pet rename UI in frontend
 - [x] App category editor UI (add/remove/change categories)
 - [x] Focus streak heatmap (GitHub-style contribution grid)
-- [ ] Sound effects for pet interactions
-- [ ] Dark/light theme toggle
+- [x] Sound effects for pet interactions
+- [x] Dark/light theme toggle

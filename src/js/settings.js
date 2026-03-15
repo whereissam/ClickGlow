@@ -1,6 +1,7 @@
 // Settings panel and onboarding wizard
 import { invoke } from './utils.js';
 import { checkAccessibility } from './controls.js';
+import { initSound, playToggle } from './sounds.js';
 
 // --- Settings ---
 export async function loadSettings() {
@@ -10,7 +11,39 @@ export async function loadSettings() {
   } catch (e) {
     console.error('Failed to load settings:', e);
   }
+  loadTheme();
 }
+
+// --- Theme ---
+function loadTheme() {
+  const saved = localStorage.getItem('clickglow_theme') || 'dark';
+  applyTheme(saved);
+  document.querySelectorAll('#themeToggle .theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === saved);
+  });
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('clickglow_theme', theme);
+}
+
+document.getElementById('themeToggle')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.theme-btn');
+  if (!btn) return;
+  const theme = btn.dataset.theme;
+  applyTheme(theme);
+  document.querySelectorAll('#themeToggle .theme-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === theme);
+  });
+  playToggle();
+});
+
+// Init theme on page load (before settings tab is opened)
+(function () {
+  const saved = localStorage.getItem('clickglow_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+})();
 
 document.getElementById('saveRetentionBtn').addEventListener('click', async () => {
   const months = parseInt(document.getElementById('retentionMonths').value);

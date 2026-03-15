@@ -1,6 +1,7 @@
 // Focus Pet, Pomodoro, mini pet, desktop buddy toggle
 import { invoke, showToast } from './utils.js';
 import { setPetPollTimer } from './controls.js';
+import { playPetClick, playFocusStart, playFocusComplete, playRename, playLevelUp } from './sounds.js';
 
 let pomodoroTimer = null;
 let pomodoroDurationMins = 25;
@@ -130,6 +131,7 @@ document.getElementById('petCreature').addEventListener('click', () => {
   creature.style.animation = 'none';
   creature.offsetHeight;
   creature.style.animation = 'petBounce 0.4s ease';
+  playPetClick();
 });
 
 // --- Pet Rename (click to edit) ---
@@ -155,6 +157,7 @@ async function commitRename() {
     petNameTag.textContent = pet.name;
     document.getElementById('miniPetName').textContent = pet.name;
     showToast('Renamed to ' + pet.name);
+    playRename();
   } catch (e) {
     console.error('Rename failed:', e);
     showToast('Rename failed', true);
@@ -277,6 +280,7 @@ document.getElementById('pomodoroStartBtn').addEventListener('click', () => {
   document.getElementById('pomodoroStartBtn').style.display = 'none';
   document.getElementById('pomodoroStopBtn').style.display = 'inline-block';
   document.getElementById('pomodoroDuration').disabled = true;
+  playFocusStart();
 
   pomodoroTimer = setInterval(async () => {
     pomodoroSecondsLeft--;
@@ -291,8 +295,11 @@ document.getElementById('pomodoroStartBtn').addEventListener('click', () => {
       document.getElementById('pomodoroDisplay').textContent = formatTime(pomodoroDurationMins * 60);
 
       try {
+        const prevLevel = parseInt(document.getElementById('petLevel').textContent) || 1;
         const pet = await invoke('feed_pet', { focusMins: pomodoroDurationMins });
         updatePetUI(pet);
+        if (pet.level > prevLevel) playLevelUp();
+        else playFocusComplete();
       } catch (e) {
         console.error('Failed to feed pet:', e);
       }

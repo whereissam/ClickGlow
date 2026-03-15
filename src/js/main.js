@@ -14,6 +14,7 @@ import { resizeAllCharts } from './charts.js';
 import { loadTrailArt } from './trail-art.js';
 import { loadReplay } from './heatmap-replay.js';
 import { loadTerrain, stopTerrainAnimation } from './terrain-map.js';
+import { initSound } from './sounds.js';
 
 // Register tab loaders
 registerTabLoader('dashboard', () => {
@@ -96,6 +97,7 @@ window.addEventListener('DOMContentLoaded', () => {
   startPanicPoll();
   updateStatus();
   checkAccessibility();
+  initSound();
   setInterval(updateStatus, 5000);
 });
 

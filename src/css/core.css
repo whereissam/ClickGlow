@@ -21,6 +21,40 @@
   --radius-sm: 8px;
 }
 
+/* Light theme */
+[data-theme="light"] {
+  --bg: #F5F5F7;
+  --bg-card: #FFFFFF;
+  --bg-hover: #EBEBED;
+  --bg-sidebar: #EAEAEC;
+  --accent: #D9940E;
+  --accent-secondary: #E0551A;
+  --green: #3DA630;
+  --blue: #3D6FE0;
+  --text: #1D1D1F;
+  --text-dim: #6E6E73;
+  --text-muted: #A1A1A6;
+  --text-secondary: #86868B;
+  --border: #D2D2D7;
+}
+
+[data-theme="light"] .trail-art-canvas,
+[data-theme="light"] .replay-heatmap-container,
+[data-theme="light"] .terrain-container {
+  background: #1E1F24;
+}
+
+[data-theme="light"] .recording-indicator {
+  background: rgba(61,166,48,0.08);
+  border-color: rgba(61,166,48,0.15);
+}
+
+[data-theme="light"] .mini-hp-bar,
+[data-theme="light"] .pet-hp-bar,
+[data-theme="light"] .pet-xp-bar {
+  background: rgba(0,0,0,0.06);
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);
