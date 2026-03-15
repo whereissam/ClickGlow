@@ -320,7 +320,8 @@
               <div class="pet-mouth"></div>
             </div>
             <div class="pet-ground"></div>
-            <div class="pet-name-tag" id="petNameTag">Glow</div>
+            <div class="pet-name-tag" id="petNameTag" title="Click to rename">Glow</div>
+            <input type="text" class="pet-name-input" id="petNameInput" maxlength="16" style="display:none" />
           </div>
 
           <div class="pet-info">
@@ -374,6 +375,25 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Focus Streak Heatmap -->
+        <div class="chart-section streak-section">
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7ED957" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+            Focus Streak
+          </h3>
+          <div class="streak-legend">
+            <span class="streak-legend-label">Less</span>
+            <span class="streak-cell" style="background:var(--bg-hover)"></span>
+            <span class="streak-cell" style="background:rgba(74,222,128,0.2)"></span>
+            <span class="streak-cell" style="background:rgba(74,222,128,0.45)"></span>
+            <span class="streak-cell" style="background:rgba(74,222,128,0.7)"></span>
+            <span class="streak-cell" style="background:#4ade80"></span>
+            <span class="streak-legend-label">More</span>
+          </div>
+          <div id="streakGrid" class="streak-grid"></div>
+          <div class="streak-summary" id="streakSummary"></div>
         </div>
 
         <!-- Desktop Buddy Toggle -->
@@ -444,6 +464,15 @@
           <div class="rule-editor-section">
             <h4>App Rules</h4>
             <div id="appRulesList" class="rules-list"></div>
+            <div class="rule-add-row">
+              <input type="text" id="newAppName" placeholder="e.g. Slack, Figma, Notion" class="rule-input" />
+              <select id="newAppCat" class="rule-select">
+                <option value="productive">Productive</option>
+                <option value="neutral">Neutral</option>
+                <option value="distraction">Distraction</option>
+              </select>
+              <button id="addAppRuleBtn" class="btn-small">Add</button>
+            </div>
           </div>
 
           <div class="rule-editor-section">

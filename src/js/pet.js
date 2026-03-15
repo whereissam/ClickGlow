@@ -28,6 +28,7 @@ export async function loadPetPanel() {
   } catch (e) {
     console.error('Failed to load pet:', e);
   }
+  loadStreakHeatmap();
 
   const timer = setInterval(async () => {
     try {
@@ -130,6 +131,129 @@ document.getElementById('petCreature').addEventListener('click', () => {
   creature.offsetHeight;
   creature.style.animation = 'petBounce 0.4s ease';
 });
+
+// --- Pet Rename (click to edit) ---
+const petNameTag = document.getElementById('petNameTag');
+const petNameInput = document.getElementById('petNameInput');
+
+petNameTag.style.cursor = 'pointer';
+petNameTag.addEventListener('click', () => {
+  petNameInput.value = petNameTag.textContent;
+  petNameTag.style.display = 'none';
+  petNameInput.style.display = 'block';
+  petNameInput.focus();
+  petNameInput.select();
+});
+
+async function commitRename() {
+  const newName = petNameInput.value.trim();
+  petNameInput.style.display = 'none';
+  petNameTag.style.display = 'block';
+  if (!newName || newName === petNameTag.textContent) return;
+  try {
+    const pet = await invoke('rename_pet', { name: newName });
+    petNameTag.textContent = pet.name;
+    document.getElementById('miniPetName').textContent = pet.name;
+    showToast('Renamed to ' + pet.name);
+  } catch (e) {
+    console.error('Rename failed:', e);
+    showToast('Rename failed', true);
+  }
+}
+
+petNameInput.addEventListener('blur', commitRename);
+petNameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); petNameInput.blur(); }
+  if (e.key === 'Escape') { petNameInput.style.display = 'none'; petNameTag.style.display = 'block'; }
+});
+
+// --- Focus Streak Heatmap (GitHub-style grid) ---
+export async function loadStreakHeatmap() {
+  try {
+    const history = await invoke('get_focus_history');
+    renderStreakGrid(history);
+  } catch (e) {
+    console.error('Failed to load focus history:', e);
+  }
+}
+
+function renderStreakGrid(history) {
+  const grid = document.getElementById('streakGrid');
+  const summary = document.getElementById('streakSummary');
+  if (!grid) return;
+  grid.textContent = '';
+
+  // Build a map of date -> count
+  const map = {};
+  let totalSessions = 0;
+  let activeDays = 0;
+  for (const [date, count] of history) {
+    map[date] = count;
+    totalSessions += count;
+    activeDays++;
+  }
+
+  // Generate last 90 days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = 91; // 13 weeks
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - days + 1);
+
+  // Align to start of week (Sunday)
+  const startDay = startDate.getDay();
+  startDate.setDate(startDate.getDate() - startDay);
+
+  const totalDays = Math.ceil((today - startDate) / 86400000) + 1;
+  const weeks = Math.ceil(totalDays / 7);
+
+  for (let w = 0; w < weeks; w++) {
+    const col = document.createElement('div');
+    col.className = 'streak-col';
+    for (let d = 0; d < 7; d++) {
+      const cellDate = new Date(startDate);
+      cellDate.setDate(cellDate.getDate() + w * 7 + d);
+      const dateStr = cellDate.toISOString().slice(0, 10);
+      const count = map[dateStr] || 0;
+
+      const cell = document.createElement('div');
+      cell.className = 'streak-cell';
+      cell.title = `${dateStr}: ${count} session${count !== 1 ? 's' : ''}`;
+
+      if (cellDate > today) {
+        cell.style.visibility = 'hidden';
+      } else if (count === 0) {
+        cell.style.background = 'var(--bg-hover)';
+      } else if (count === 1) {
+        cell.style.background = 'rgba(74,222,128,0.2)';
+      } else if (count === 2) {
+        cell.style.background = 'rgba(74,222,128,0.45)';
+      } else if (count <= 4) {
+        cell.style.background = 'rgba(74,222,128,0.7)';
+      } else {
+        cell.style.background = '#4ade80';
+      }
+
+      col.appendChild(cell);
+    }
+    grid.appendChild(col);
+  }
+
+  // Current streak (consecutive days from today backward)
+  let currentStreak = 0;
+  const checkDate = new Date(today);
+  while (true) {
+    const ds = checkDate.toISOString().slice(0, 10);
+    if (map[ds] && map[ds] > 0) {
+      currentStreak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  summary.textContent = `${totalSessions} sessions over ${activeDays} days · ${currentStreak} day streak`;
+}
 
 // --- Pomodoro timer ---
 function formatTime(seconds) {

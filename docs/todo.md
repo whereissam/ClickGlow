@@ -195,25 +195,25 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 
 ### 8A: Mouse Trail Art Generator
 
-- [ ] Record mouse trajectory with timestamps
-- [ ] Render as generative art: particle trails / brush strokes / flow fields
-- [ ] One day of work → one unique abstract artwork
-- [ ] Export as PNG wallpaper / set as desktop background
-- [ ] Art style options: watercolor, neon, ink, constellation
+- [x] Record mouse trajectory with timestamps
+- [x] Render as generative art: particle trails / brush strokes / flow fields
+- [x] One day of work → one unique abstract artwork
+- [x] Export as PNG wallpaper / set as desktop background
+- [x] Art style options: watercolor, neon, ink, constellation
 
 ### 8B: Time-lapse Heatmap Replay
 
-- [ ] Store heatmap snapshots per hour
-- [ ] Playback slider: watch heatmap "burn in" from 9am → 5pm
-- [ ] Adjustable speed: 1x, 2x, 5x, 10x
+- [x] Store heatmap snapshots per hour
+- [x] Playback slider: watch heatmap "burn in" from 9am → 5pm
+- [x] Adjustable speed: 1x, 2x, 5x, 10x
 - [ ] Export as GIF / video
 
 ### 8C: 3D Terrain Map
 
-- [ ] Convert click density → 3D height map
-- [ ] Click clusters = mountains, mouse trails = rivers
-- [ ] Interactive WebGL viewer (rotate, zoom)
-- [ ] "Your desktop is a landscape" — shareable render
+- [x] Convert click density → 3D height map
+- [x] Click clusters = mountains, mouse trails = rivers
+- [x] Interactive WebGL viewer (rotate, zoom)
+- [x] "Your desktop is a landscape" — shareable render
 
 ---
 
@@ -242,8 +242,8 @@ Evolve the Focus Pet into a **desktop-edge climbing character** — a transparen
 - [x] App name resolution: bundle ID → friendly name (VS Code, Chrome, etc. instead of "Electron")
 - [ ] Windows active window detection (GetForegroundWindow)
 - [ ] Linux active window detection (xdotool / X11; document Wayland limitations)
-- [ ] Pet rename UI in frontend
-- [ ] App category editor UI (add/remove/change categories)
-- [ ] Focus streak heatmap (GitHub-style contribution grid)
+- [x] Pet rename UI in frontend
+- [x] App category editor UI (add/remove/change categories)
+- [x] Focus streak heatmap (GitHub-style contribution grid)
 - [ ] Sound effects for pet interactions
 - [ ] Dark/light theme toggle

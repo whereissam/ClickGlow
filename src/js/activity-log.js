@@ -87,8 +87,14 @@ async function loadCategoryRules() {
       }
       sel.addEventListener('change', () => updateAppCategory(name, sel.value));
 
+      const delBtn = document.createElement('button');
+      delBtn.className = 'rule-delete';
+      delBtn.textContent = 'x';
+      delBtn.addEventListener('click', () => removeAppCategory(name));
+
       row.appendChild(nameSpan);
       row.appendChild(sel);
+      row.appendChild(delBtn);
       appList.appendChild(row);
     }
 
@@ -152,6 +158,29 @@ async function removeKeywordRule(keyword) {
     console.error('Failed to delete keyword rule:', e);
   }
 }
+
+async function removeAppCategory(appName) {
+  try {
+    await invoke('set_app_category', { appName, category: 'neutral' });
+    loadCategoryRules();
+  } catch (e) {
+    console.error('Failed to remove app category:', e);
+  }
+}
+
+document.getElementById('addAppRuleBtn').addEventListener('click', async () => {
+  const input = document.getElementById('newAppName');
+  const appName = input.value.trim();
+  if (!appName) return;
+  const category = document.getElementById('newAppCat').value;
+  try {
+    await invoke('set_app_category', { appName, category });
+    input.value = '';
+    loadCategoryRules();
+  } catch (e) {
+    console.error('Failed to add app rule:', e);
+  }
+});
 
 document.getElementById('addKeywordBtn').addEventListener('click', async () => {
   const input = document.getElementById('newKeyword');

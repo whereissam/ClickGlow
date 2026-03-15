@@ -311,7 +311,33 @@ pub fn feed_pet(state: State<AppState>, focus_mins: i32) -> Result<PetState, Str
     let mut p = pet::load_pet(&state.db);
     p.feed(focus_mins);
     pet::save_pet(&state.db, &p)?;
+
+    // Record daily focus session for streak heatmap
+    let today = today_date_str();
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let mut history: std::collections::HashMap<String, i32> =
+        match queries::get_metadata(&conn, "focus_history") {
+            Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+            _ => std::collections::HashMap::new(),
+        };
+    *history.entry(today).or_insert(0) += 1;
+    let json = serde_json::to_string(&history).map_err(|e| e.to_string())?;
+    queries::set_metadata(&conn, "focus_history", &json).map_err(|e| e.to_string())?;
+
     Ok(p)
+}
+
+#[tauri::command]
+pub fn get_focus_history(state: State<AppState>) -> Result<Vec<(String, i32)>, String> {
+    let conn = state.db.conn.lock().map_err(|e| e.to_string())?;
+    let history: std::collections::HashMap<String, i32> =
+        match queries::get_metadata(&conn, "focus_history") {
+            Ok(Some(json)) => serde_json::from_str(&json).unwrap_or_default(),
+            _ => std::collections::HashMap::new(),
+        };
+    let mut entries: Vec<(String, i32)> = history.into_iter().collect();
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+    Ok(entries)
 }
 
 #[tauri::command]
