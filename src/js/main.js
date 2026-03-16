@@ -25,6 +25,11 @@ registerTabLoader('dashboard', () => {
   startApmPoll();
   startPanicPoll();
 });
+registerTabLoader('heatmap', () => {
+  loadHeatmap();
+  stopApmPoll();
+  stopPanicPoll();
+});
 registerTabLoader('keyboard', () => {
   loadKeyboardChart();
   loadKeyboardWear();

@@ -133,15 +133,67 @@ export async function updateStatus() {
   }
 }
 
+let bannerDismissed = false;
+let permissionConfirmed = false;
+
 export async function checkAccessibility() {
+  if (bannerDismissed || permissionConfirmed) return;
   try {
-    const granted = await invoke('check_accessibility');
     const banner = document.getElementById('accessibilityBanner');
-    if (banner) banner.style.display = granted ? 'none' : 'flex';
+    if (!banner) return;
+
+    // Check if we have any events from today — this is the real proof
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const summary = await invoke('get_daily_summary', {
+      startMs: startOfDay.getTime(),
+      endMs: Date.now(),
+    });
+    const hasData = (summary.total_clicks + summary.total_moves + summary.total_keystrokes) > 0;
+
+    if (hasData) {
+      // Events exist — permission is definitely working
+      permissionConfirmed = true;
+      banner.style.display = 'none';
+      return;
+    }
+
+    // No data yet — also check the API
+    const granted = await invoke('check_accessibility');
+    if (granted) {
+      permissionConfirmed = true;
+      banner.style.display = 'none';
+      return;
+    }
+
+    // No data AND API says no permission — show banner
+    banner.style.display = 'flex';
   } catch (e) {
     console.error('Failed to check accessibility:', e);
   }
 }
+
+// Don't check immediately on load — wait 5s for events to start flowing
+setTimeout(() => {
+  checkAccessibility();
+  // Then re-poll every 5s
+  setInterval(checkAccessibility, 5000);
+}, 5000);
+
+// Banner buttons
+document.getElementById('bannerOpenSettings')?.addEventListener('click', async () => {
+  try { await invoke('open_accessibility_settings'); } catch (_) {}
+});
+
+document.getElementById('bannerRestart')?.addEventListener('click', async () => {
+  try { await invoke('restart_app'); } catch (_) {}
+});
+
+document.getElementById('bannerDismiss')?.addEventListener('click', () => {
+  bannerDismissed = true;
+  const banner = document.getElementById('accessibilityBanner');
+  if (banner) banner.style.display = 'none';
+});
 
 // --- Tab switching ---
 const tabLoaders = {};

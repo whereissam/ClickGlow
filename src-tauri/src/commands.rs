@@ -71,10 +71,33 @@ pub fn get_listener_status(state: State<AppState>) -> String {
     }
 }
 
-/// Check if macOS Accessibility permission is granted
+/// Check if macOS Accessibility permission is granted (silent, no prompt)
 #[tauri::command]
 pub fn check_accessibility() -> bool {
     platform::check_accessibility_permission()
+}
+
+/// Check accessibility and show the macOS system prompt if not granted
+#[tauri::command]
+pub fn check_accessibility_prompt() -> bool {
+    platform::check_accessibility_with_prompt()
+}
+
+/// Open macOS Accessibility settings
+#[tauri::command]
+pub fn open_accessibility_settings() {
+    #[cfg(target_os = "macos")]
+    {
+        let _ = std::process::Command::new("open")
+            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+            .spawn();
+    }
+}
+
+/// Restart the app
+#[tauri::command]
+pub fn restart_app(app: tauri::AppHandle) {
+    app.restart();
 }
 
 /// Check if onboarding has been completed

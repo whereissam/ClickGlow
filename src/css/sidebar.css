@@ -323,6 +323,57 @@
   color: #FFCDD2;
 }
 
+.banner-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.banner-btn {
+  padding: 4px 12px;
+  border: 1px solid rgba(255,130,130,0.3);
+  background: transparent;
+  color: #FF8A80;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.banner-btn:hover {
+  background: rgba(255,130,130,0.15);
+}
+
+.banner-btn.accent {
+  background: rgba(255,82,82,0.2);
+  border-color: rgba(255,82,82,0.4);
+  color: #fff;
+}
+
+.banner-btn.accent:hover {
+  background: rgba(255,82,82,0.35);
+}
+
+.banner-btn-x {
+  background: none;
+  border: none;
+  color: #FF8A80;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.banner-btn-x:hover {
+  opacity: 1;
+}
+
 /* Custom Select Dropdown */
 .custom-select {
   position: relative;

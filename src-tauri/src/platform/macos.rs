@@ -2,6 +2,7 @@ use std::ffi::c_void;
 
 #[link(name = "ApplicationServices", kind = "framework")]
 unsafe extern "C" {
+    fn AXIsProcessTrusted() -> bool;
     fn AXIsProcessTrustedWithOptions(options: *const c_void) -> bool;
 }
 
@@ -41,10 +42,15 @@ fn get_prompt_key() -> *const c_void {
     }
 }
 
-/// Check if the app has macOS Accessibility permission.
-/// If `prompt` is true and permission is not granted, macOS will show the
-/// system prompt asking the user to enable it in System Settings.
+/// Check if the app has macOS Accessibility permission (silent, no system prompt).
 pub fn check_accessibility_permission() -> bool {
+    let trusted = unsafe { AXIsProcessTrusted() };
+    log::info!("AXIsProcessTrusted = {}", trusted);
+    trusted
+}
+
+/// Check accessibility and show the macOS system prompt if not granted.
+pub fn check_accessibility_with_prompt() -> bool {
     unsafe {
         let key = get_prompt_key();
         let value = kCFBooleanTrue;

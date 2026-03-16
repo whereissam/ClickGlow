@@ -108,7 +108,8 @@ window.onboardingNext = function () {
 
 window.onboardingCheckPerm = async function () {
   try {
-    const granted = await invoke('check_accessibility');
+    // Use the prompting variant to trigger macOS permission dialog
+    const granted = await invoke('check_accessibility_prompt');
     const btn = document.getElementById('onboardingPermBtn');
     setPermStatus(granted);
 

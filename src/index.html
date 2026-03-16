@@ -125,7 +125,12 @@
       <!-- Accessibility Warning Banner (macOS) -->
       <div id="accessibilityBanner" class="alert-banner" style="display:none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span>Accessibility permission required. Please enable ClickGlow in <strong>System Settings → Privacy → Accessibility</strong>, then restart.</span>
+        <span>Accessibility permission not detected. <strong>Remove ClickGlow</strong> from Accessibility list, <strong>re-add it</strong> (or toggle off → on), then click Restart.</span>
+        <div class="banner-actions">
+          <button id="bannerOpenSettings" class="banner-btn">Open Settings</button>
+          <button id="bannerRestart" class="banner-btn accent">Restart</button>
+          <button id="bannerDismiss" class="banner-btn-x" title="Dismiss">✕</button>
+        </div>
       </div>
 
       <!-- Dashboard -->
