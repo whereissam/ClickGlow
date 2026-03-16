@@ -35,6 +35,21 @@ Your Focus Pet is a virtual companion that thrives when you stay focused and suf
 | Complete a Pomodoro | +15 HP heal, +XP equal to minutes focused |
 | Focus streak bonus | Streak counter increases |
 
+### Passive HP Regen (Hourly)
+
+Your pet slowly recovers HP just by you working normally — no Pomodoro required.
+
+| Condition | Result |
+|-----------|--------|
+| 1 hour of activity with **zero** distraction | +5 HP |
+| 1 hour with any distraction time | No heal, check again next hour |
+| No activity (laptop closed / idle) | No heal |
+
+- Checked once per hour (e.g., 6:08 → 7:08 → 8:08)
+- Requires at least some app activity in the hour (proves you're at the computer)
+- HP 0 → 100 takes ~20 hours of clean work
+- Stacks with Pomodoro heals (+15 HP per session)
+
 ### Taking Damage (Negative Actions)
 
 | Action | Penalty |

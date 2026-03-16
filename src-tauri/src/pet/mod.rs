@@ -86,7 +86,7 @@ impl PetState {
         self.update_mood();
     }
 
-    fn update_mood(&mut self) {
+    pub fn update_mood(&mut self) {
         self.mood = if self.hp <= 0 {
             "sleeping".to_string()
         } else if self.hp < 30 {

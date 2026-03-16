@@ -21,6 +21,9 @@ pub fn start_tracker(db: Arc<Database>, paused: Arc<AtomicBool>, distracted: Arc
         let mut last_title: Option<String> = None;
         let mut last_switch = Instant::now();
         let mut distraction_ticks: u32 = 0;
+        let mut last_hourly_check_ms: i64 = now_ms();
+        const HOURLY_CHECK_INTERVAL_MS: i64 = 3600 * 1000; // 1 hour
+        const PASSIVE_HEAL_AMOUNT: i32 = 5;
 
         loop {
             std::thread::sleep(POLL_INTERVAL);
@@ -60,6 +63,43 @@ pub fn start_tracker(db: Arc<Database>, paused: Arc<AtomicBool>, distracted: Arc
                 }
             } else {
                 distraction_ticks = 0;
+            }
+
+            // Passive HP regen: check once per hour
+            // Look back at the past hour's app_events — if no distraction time, heal +5 HP
+            let current_ms = now_ms();
+            if current_ms - last_hourly_check_ms >= HOURLY_CHECK_INTERVAL_MS {
+                let check_since = last_hourly_check_ms;
+                last_hourly_check_ms = current_ms;
+
+                if let Ok(conn) = db.conn.lock() {
+                    // Check if there was any distraction in the past hour
+                    let distraction_ms: i64 = conn.query_row(
+                        "SELECT COALESCE(SUM(duration_ms), 0) FROM app_events
+                         WHERE created_at >= ?1 AND category = 'distraction'",
+                        rusqlite::params![check_since],
+                        |row| row.get(0),
+                    ).unwrap_or(0);
+
+                    // Also check there was SOME activity (not just idle/closed laptop)
+                    let activity_count: i64 = conn.query_row(
+                        "SELECT COUNT(*) FROM app_events WHERE created_at >= ?1",
+                        rusqlite::params![check_since],
+                        |row| row.get(0),
+                    ).unwrap_or(0);
+
+                    if activity_count > 0 && distraction_ms == 0 {
+                        let mut p = pet::load_pet(&db);
+                        if p.hp < p.max_hp {
+                            p.hp = (p.hp + PASSIVE_HEAL_AMOUNT).min(p.max_hp);
+                            p.update_mood();
+                            let _ = pet::save_pet(&db, &p);
+                            log::info!("Pet passive heal +{} HP (clean hour, {} events)", PASSIVE_HEAL_AMOUNT, activity_count);
+                        }
+                    } else {
+                        log::info!("Pet passive heal skipped (distraction: {}ms, events: {})", distraction_ms, activity_count);
+                    }
+                }
             }
 
             let app_changed = last_app.as_deref() != Some(&app);
